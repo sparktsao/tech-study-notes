@@ -1,7 +1,8 @@
-# Finding NEMO — System Specification
+# Finding NEMO
+## An Agent Ticket System to Find the Right NemoClaw
 
 > **NEMO**: **N**etwork of **E**xecution and **M**anagement **O**rchestration
-> _"How to route a ticket to the right nemo claw"_
+> _"An agent ticket system that routes every task to the right NemoClaw"_
 
 ---
 
