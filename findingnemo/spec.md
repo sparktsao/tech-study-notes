@@ -1,5 +1,6 @@
 # Finding NEMO
 ## An Agent Ticket System to Find the Right NemoClaw
+### _Make your Agents work together faster, better and safer_
 
 > **NEMO**: **N**etwork of **E**xecution and **M**anagement **O**rchestration
 > _"An agent ticket system that routes every task to the right NemoClaw"_
@@ -8,9 +9,37 @@
 
 ## 1. Purpose
 
-Finding NEMO is a **SoD-first multi-agent orchestration system** that accepts human instructions, decomposes them into auditable sub-tasks, routes those tasks to the correct specialized execution agent ("claw"), and evaluates outcomes against quality and safety criteria before closure.
+### The Problem
 
-The name is intentional: the ocean (the task space) is large and ambiguous. NEMO's job is not to do all the swimming — it is to find the *right claw* in *Nemo's world* to handle each task, then verify the result independently.
+Modern AI workflows are fragmented. A human gives an instruction; a single agent attempts everything; quality, safety, and accountability are afterthoughts. As task complexity grows — spanning code generation, research, document creation, infrastructure automation — no single agent is the right tool for every sub-problem. The result is slower output, correlated failure modes, and no audit trail.
+
+### What Finding NEMO Is
+
+Finding NEMO is a **multi-agent orchestration layer** that turns a human instruction into a structured ticket, routes that ticket to the right specialized execution agent ("NemoClaw"), and independently evaluates the outcome before it closes. It is an **agent ticket system** — not another chat interface.
+
+The goal is simple: **make your agents work together faster, better, and safer.**
+
+- **Faster** — tasks are parallelized across specialized agents; no single agent context-switches between domains
+- **Better** — the right agent for each job; framework design matters as much as model capability (arXiv:2603.13424v1)
+- **Safer** — Separation of Duties is enforced at the platform level; the agent that executes never certifies its own output
+
+### Where It Comes From
+
+Finding NEMO synthesizes ideas from multiple layers of research and tooling:
+
+| Layer | Source | Contribution |
+|-------|--------|-------------|
+| **Orchestration control plane** | [Paperclip](https://github.com/paperclipai/paperclip) | Persistent task queue, atomic checkout, budget enforcement, heartbeat loop, goal ancestry — the "company OS" for agents |
+| **Framework performance research** | Tsao & Cheng — arXiv:2603.13424v1 | Same LLM in a better framework achieves 50% more task success; framework design, not model choice, is the primary lever |
+| **Long-running agent harness** | Anthropic Engineering | Checkpointing, observability, and recovery patterns for agents that run beyond a single context window |
+| **Prompt injection defense** | OpenClaw / openclaudepromptinjection | Reader→Actor isolation: untrusted data never reaches a privileged agent; structured JSON is the trust boundary |
+| **Security & independence** | Girard, TrendAI — SoD-First AI Code Security (March 2026) | The generator must never be the reviewer; multi-LLM independence, blind review, provenance tagging |
+
+### Execution Runtime — OpenShell and NemoClaw
+
+The execution layer is built on **OpenShell** and **NemoClaw**, enabling native integration with **NVIDIA's agent ecosystem** (NIM microservices, NeMo Agent Toolkit, CUDA-accelerated inference) — while remaining runtime-agnostic. A NemoClaw is any execution agent registered in the platform; it can run on NVIDIA infrastructure, Claude Code, Codex, Gemini, or any HTTP-compatible agent runtime.
+
+> The name is intentional: in a vast ocean of tasks, NEMO's job is not to do all the swimming — it is to find the *right claw* and hand off with confidence, then verify the catch independently.
 
 ---
 
