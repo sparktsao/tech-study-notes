@@ -23,13 +23,21 @@ Modern AI workflows are fragmented. A human gives an instruction; a single agent
 
 ### What Finding NEMO Is
 
-Finding NEMO is a **multi-agent orchestration layer** that turns a human instruction into a structured ticket, routes that ticket to the right specialized execution agent ("NemoClaw"), and independently evaluates the outcome before it closes. It is an **agent ticket system** — not another chat interface.
+Finding NEMO is a **multi-agent orchestration layer** modeled on how a well-run company hires and manages employees — except the employees are AI agents. The ticket system acts as the **company**: it posts Job Descriptions (JDs), qualifies candidates, coaches workers, enforces security controls, and evaluates performance when the work is done.
 
 The goal is simple: **make your agents work together faster, better, and safer.**
 
-- **Faster** — tasks are parallelized across specialized agents; no single agent context-switches between domains
-- **Better** — the right agent for each job; framework design matters as much as model capability (arXiv:2603.13424v1)
-- **Safer** — Separation of Duties is enforced at the platform level; the agent that executes never certifies its own output
+- **Faster** — tasks are parallelized across pre-qualified specialized agents; no single agent context-switches between unrelated domains
+- **Better** — the right agent for each job, verified before assignment; agent capability is declared and tested, not assumed
+- **Safer** — the company (ticket system) maintains oversight at every stage: it does not merely dispatch and forget
+
+**The three-stage lifecycle:**
+
+| Stage | Company Analogy | What Happens |
+|-------|----------------|--------------|
+| **Post** | Write a Job Description | Ticket is created with task requirements, required capabilities, acceptance criteria, and budget |
+| **Qualify & Assign** | Screen and hire | Agent must prove qualification (unit tests, reputation score, or config match) before checking out the ticket |
+| **Coach, Control & Evaluate** | Manage, audit, appraise | System coaches the agent during execution, enforces security controls on inputs/outputs, then runs three independent evaluations on the result: **performance**, **security**, and **cost** |
 
 ### Where It Comes From
 
@@ -38,7 +46,7 @@ Finding NEMO synthesizes ideas from multiple layers of research and tooling:
 | Layer | Source | Contribution |
 |-------|--------|-------------|
 | **Orchestration control plane** | [Paperclip](https://github.com/paperclipai/paperclip) | Persistent task queue, atomic checkout, budget enforcement, heartbeat loop, goal ancestry — the "company OS" for agents |
-| **Framework design & agent security** | Tsao & Cheng — openclaudepromptinjection (arXiv:2603.13424v1) | Framework design drives 50% of task performance delta; same research produces the OpenClaw Reader→Actor isolation pattern that keeps untrusted data away from privileged agents |
+| **Agent privilege separation** | Tsao & Cheng — "Agent Privilege Separation: A Structural Defense Against Prompt Injection" (arXiv:2603.13424v1) | Structural isolation between unprivileged readers and privileged actors prevents prompt injection across any multi-agent system — not limited to OpenClaw; generalizes to any agent runtime |
 | **Long-running agent harness** | Anthropic Engineering | Checkpointing, observability, and recovery patterns for agents that run beyond a single context window |
 | **Security & independence** | Girard, TrendAI — SoD-First AI Code Security (March 2026) | The generator must never be the reviewer; multi-LLM independence, blind review, provenance tagging |
 
@@ -56,7 +64,7 @@ These principles are non-negotiable and come directly from the three reference p
 
 | Principle | Source | Implication |
 |-----------|--------|-------------|
-| **Framework design drives performance** | Tsao & Cheng — openclaudepromptinjection (arXiv:2603.13424v1) | Agent selection and framework structure matter as much as model capability. Same LLM in a better framework = 50% performance delta. The same research yields the OpenClaw Reader→Actor isolation pattern: untrusted data is sanitized by a read-only Reader; only structured JSON reaches the privileged Actor. |
+| **Agent privilege separation** | Tsao & Cheng — arXiv:2603.13424v1 | Structurally separate unprivileged Reader agents (untrusted data, read-only) from privileged Actor agents (validated JSON only, tool access). This pattern is runtime-agnostic — it applies inside OpenClaw, NemoClaw, or any multi-agent execution layer. |
 | **Separation of Duties (SoD)** | Girard, TrendAI (March 2026) | The agent that generates output must never be the agent that certifies it. Generator ≠ Reviewer. Execution ≠ Evaluation. |
 | **Harness design for long-running tasks** | Anthropic Engineering | Long tasks must be checkpointable, observable, and recoverable. Agents operate via heartbeat loops, not fire-and-forget. |
 
@@ -70,50 +78,54 @@ These principles are non-negotiable and come directly from the three reference p
 flowchart TD
     H(["👤 Human\ninstructs"])
 
-    subgraph KNOWN["Known Tasks"]
-        KT["① Summarize my email\n② Build a system like …\n③ Create a ppt about …"]
-    end
-
     subgraph PLANNER["🧠 Assistant Agent  (Planner)"]
         direction TB
-        BP["Break down task into sub-tasks\nwith best practices:\n\n· arXiv:2603.13424v1\n· Anthropic harness-design-long-running-apps\n· SoD-First-AI-Code-Security (Girard, TrendAI)"]
-        CHK["Review task structure\nSpeed  ·  Quality  ·  Safety"]
+        BP["Decompose into sub-tasks\nApply best practices:\n· Agent Privilege Separation — Tsao & Cheng\n· Long-running harness — Anthropic\n· SoD-First — Girard, TrendAI"]
+        CHK["Author Job Description per task:\nrequired capabilities · acceptance criteria\nbudget · risk level · security constraints"]
         BP --> CHK
     end
 
-    subgraph TASKLIST["Sub-tasks dispatched"]
-        direction LR
-        T1[Task-1] ~~~ T2[Task-2] ~~~ T3[Task-3]
+    subgraph COMPANY["📋 NEMO Ticket System  (The Company)"]
+        direction TB
+        JD[/"🗒️ Job Description Tickets\nTask-1 · Task-2 · Task-3\n— capabilities required\n— acceptance criteria\n— budget ceiling"/]
+        REG[("🗄️ Agent Registry\nqualified agents · reputation scores\nunit-test results · capability tags")]
+        GATE{"✅ Qualification Gate\nDoes agent meet JD requirements?\nunit tests · reputation · config"}
+        COACH["🎓 Company Coach\nContext, guardrails, policies\nduring execution"]
+        JD --> GATE
+        REG --> GATE
+        GATE -->|"qualified"| COACH
+        GATE -->|"not qualified"| JD
     end
 
-    JIRA[("📋 Jira Ticket System\n— A Paperclip-like platform —\ngithub.com/paperclipai/paperclip")]
-
-    subgraph EXEC["⚙️ Execution Agent  ·  OpenShell / OpenClaw"]
+    subgraph EXEC["⚙️ Execution Agent  ·  OpenShell / NemoClaw"]
         direction LR
-        READER["Reader Agent\n(read-only · untrusted data)"]
-        ACTOR["Actor Agent\n(privileged · JSON only)"]
+        READER["🔍 Reader\n(unprivileged · untrusted data only)"]
+        ACTOR["⚡ Actor\n(privileged · validated JSON only)"]
         READER -->|"structured JSON"| ACTOR
     end
 
-    subgraph WORKERS["Workers"]
+    subgraph WORKERS["Specialized Workers"]
         direction LR
-        AA["Agent-A"] ~~~ AB["Agent-B"] ~~~ AC["Agent-C"]
+        AA["Agent-A\n(e.g. summarize)"] ~~~ AB["Agent-B\n(e.g. build/code)"] ~~~ AC["Agent-C\n(e.g. create asset)"]
     end
 
-    EVAL(["🔍 Evaluation Agent\n(independent model lineage)"])
+    subgraph EVAL3["🏛️ Independent Evaluation  (Post-execution)"]
+        direction LR
+        EP["📊 Performance Eval\noutput quality · task completion\nspeed · accuracy"]
+        ES["🔒 Security Eval\nprivilege adherence · SoD check\nprompt injection · provenance"]
+        EC["💰 Cost Eval\ntoken spend · budget variance\ncost-per-task · ROI"]
+    end
 
-    H --> KNOWN
-    KNOWN -->|instructs| PLANNER
-    PLANNER --> TASKLIST
-    TASKLIST --> JIRA
-    JIRA -->|"atomic checkout"| EXEC
+    H -->|instructs| PLANNER
+    PLANNER -->|"writes JD tickets"| JD
+    COACH -->|"coached handoff"| EXEC
     EXEC --> WORKERS
-    EXEC -->|"result artifact\n+ provenance tags"| EVAL
-    EVAL -->|"verdict · feedback"| JIRA
-    JIRA -.->|"status update\n(heartbeat)"| EXEC
+    EXEC -->|"result + provenance tags"| EVAL3
+    EP & ES & EC -->|"verdict · score · feedback"| COMPANY
+    COMPANY -.->|"heartbeat · checkpoint"| EXEC
 ```
 
-> **Reading the diagram:**  The Planner decomposes human instructions using three reference best-practices sources, reviews the task plan for speed/quality/safety, then writes Task-1…N into the Paperclip Jira layer.  An Execution Agent (OpenShell/OpenClaw) atomically checks out tasks and routes work through a Reader→Actor pipeline to specialized sub-agents (A/B/C).  An **independent** Evaluation Agent — different model lineage — reviews the output and posts a verdict back to the platform.  The heartbeat loop (dashed) keeps the Execution Agent in sync.
+> **Reading the diagram:** The Planner decomposes instructions into **Job Description tickets** — each specifying required capabilities, acceptance criteria, and budget. The Ticket System (the company) checks the **Agent Registry** to qualify a candidate before any checkout: agents must pass unit tests, meet reputation thresholds, or satisfy config requirements. A **Company Coach** provides context and guardrails during execution. Inside the Execution Agent, **privilege separation** (Tsao & Cheng) keeps untrusted data in an unprivileged Reader and only structured JSON flows to the privileged Actor. On completion, three **independent evaluations** run: performance, security, and cost — each feeding verdicts back to the ticket system to update agent reputation and task status.
 
 ---
 
@@ -189,21 +201,34 @@ Human: instruct
 - `research` — gather and structure information
 - `review` — evaluate an artifact for correctness, quality, or security
 
-### 4.2 Task Platform (Paperclip layer)
+### 4.2 Task Platform — The Company (Paperclip layer)
 
-**Responsibility**: Persistent, auditable task queue that prevents concurrent work on the same task and enforces budget.
+**Responsibility**: Act as the company. Post Job Descriptions, qualify agents, coach execution, enforce security controls, and close tasks only after evaluation.
 
-**Core contract** (from Paperclip architecture):
-- `POST /tasks/checkout` — atomic lock; only one execution agent wins
+**Job Description (JD) model**: Every ticket is a JD, not just a task description. It must declare:
+- `required_capabilities` — what skills/tools the agent must possess (e.g., `code-execution`, `web-search`, `gpu-inference`)
+- `qualification_method` — how capability is verified: `unit_test`, `reputation_score`, `config_match`, or `manual`
+- `acceptance_criteria` — explicit, testable definition of done
+- `security_constraints` — privilege level, allowed external sources, output sanitization rules
+- `budget_ceiling` — max token spend in cents
+- `coaching_context` — guidance, policies, and guardrails provided to the agent at handoff
+
+**Coaching**: Before handing off to an execution agent, the platform injects `coaching_context` — task-specific policies, domain guidelines, and security rules. The agent is not left to interpret the task cold.
+
+**Security control during execution**: The platform monitors heartbeats and can intervene: pause, redirect, or terminate an agent that exceeds budget, violates privilege constraints, or goes silent.
+
+**Core API contract** (from Paperclip architecture):
+- `POST /tasks/checkout` — atomic lock after qualification gate passes; only one qualified agent wins
 - `PATCH /tasks/:id` — update status, append output
 - `POST /tasks/:id/subtasks` — create child tasks
-- `GET /agents/me` — agent identity and current assignment
+- `GET /agents/me` — agent identity, assigned task, coaching context
 - All actions append to immutable `activity_log`
 
 **Invariants**:
 - Every task has a `goal_id` linking it to a company/mission goal
-- No task may be marked `completed` by the same agent that created its output (SoD gate)
-- Budget exhaustion transitions task to `blocked` not `failed`
+- No agent may check out a task without passing the qualification gate
+- No task may be marked `completed` without a passing evaluation verdict (SoD gate)
+- Budget exhaustion transitions task to `blocked`, not `failed`
 
 ### 4.3 Execution Agent (OpenShell / OpenClaw)
 
@@ -264,6 +289,47 @@ Human: instruct
 
 ---
 
+### 4.5 Agent Registry and Qualification
+
+Every agent that works in the NEMO system must be registered and qualified before it can take tickets. This is the hiring process.
+
+**Registration record**:
+
+| Field | Description |
+|-------|-------------|
+| `agent_id` | Unique identifier |
+| `capabilities` | Declared skill tags (e.g., `code-execution`, `web-search`, `gpu-inference`, `summarization`) |
+| `runtime` | Execution environment (OpenShell, NemoClaw, Claude Code, Gemini, HTTP, etc.) |
+| `qualification_status` | `pending`, `qualified`, `probation`, `disqualified` |
+| `reputation_score` | Rolling score 0.0–1.0 updated after each evaluation |
+| `unit_test_results` | Pass/fail records per capability claim |
+| `last_evaluated_at` | ISO-8601 timestamp |
+| `cost_profile` | Average token spend per task type |
+
+**Qualification methods** (any one is sufficient per capability):
+
+1. **Unit test** — the platform runs a known task with a known correct answer and scores the result
+2. **Reputation score** — rolling average of past evaluation verdicts; agents start on probation until score ≥ 0.7
+3. **Config match** — declarative check: agent's registered tools/permissions match the JD's `required_capabilities`
+4. **Manual** — human explicitly approves the agent for a task class (used for novel or high-risk work)
+
+**Qualification gate logic**:
+```
+for each required_capability in JD.required_capabilities:
+    if agent does not satisfy capability via any qualification method:
+        → reject checkout; agent stays in queue
+if all capabilities satisfied:
+    → grant checkout; inject coaching_context
+```
+
+**Reputation update after evaluation**:
+- Performance verdict `pass` → +0.05 to reputation
+- Performance verdict `fail` → -0.10 to reputation
+- Security violation → -0.20 to reputation; triggers review
+- Reputation < 0.4 → agent moved to `probation`; requires manual re-qualification
+
+---
+
 ## 5. Task Decomposition Rules (Planner Checklist)
 
 Before dispatching any sub-task, the Planner must confirm:
@@ -299,14 +365,33 @@ The routing decision maps `(task.type, task.domain, task.risk_level)` → `execu
 
 ## 7. Security Model
 
-### 7.1 Prompt Injection Defense
+### 7.1 Agent Privilege Separation
 
-All external content (email bodies, web pages, file contents, API responses) passes through the **Reader Agent** before any action is taken. The Reader produces a sanitized JSON summary. The Actor never sees raw strings from untrusted sources.
+Based on Tsao & Cheng's "Agent Privilege Separation: A Structural Defense Against Prompt Injection" (arXiv:2603.13424v1), this pattern is a **general architectural principle** — not tied to any single runtime. It applies equally inside OpenShell, NemoClaw, Claude Code, or any multi-agent execution layer.
 
-This implements the OpenClaw two-agent isolation pattern:
+**Core principle**: Every agent that touches external content must be structurally split into two roles with different privilege levels:
+
 ```
-[Untrusted External Source] → Reader (read-only) → {structured JSON} → Actor (privileged)
+[Untrusted External Source]
+         │
+         ▼
+  ┌─────────────────┐
+  │  Unprivileged   │  Read-only. No tool calls that mutate state.
+  │  Reader Agent   │  Sees raw content. Produces structured summary.
+  └────────┬────────┘
+           │  structured JSON only
+           ▼
+  ┌─────────────────┐
+  │  Privileged     │  Can call tools, write outputs, execute actions.
+  │  Actor Agent    │  Never sees raw external content.
+  └─────────────────┘
 ```
+
+**Why this generalizes beyond OpenClaw**:
+- Any agent framework where an agent reads from untrusted sources (emails, web, files, APIs, user uploads) and then takes actions is vulnerable to prompt injection
+- The structural fix is always the same: separate read from act at the privilege boundary
+- In NEMO, this pattern is enforced at the platform level — the coaching context the platform injects explicitly forbids Actors from accepting raw strings; all external content must arrive as validated JSON from a Reader step
+- NemoClaw implements this natively; for other runtimes (Claude Code, Gemini, HTTP agents), the platform enforces the boundary via input schema validation before the Actor receives its context
 
 ### 7.2 SoD Enforcement
 
@@ -342,27 +427,74 @@ These tags enable:
 
 ## 8. Evaluation Framework
 
-The Evaluation Agent tracks per-task metrics that feed into a continuous quality loop:
+Every completed task is independently evaluated on three pillars before the ticket closes. Evaluation agents must be from a different model lineage than the execution agent (Girard SoD). Verdicts feed back into agent reputation scores in the registry.
 
-| Metric | Description |
-|--------|-------------|
-| `pass_rate_by_task_type` | % of tasks passing first-time evaluation |
-| `escalation_rate` | % escalated to human; target < 10% |
-| `cross_model_disagreement_rate` | When Tier-1 and Tier-2 reviewers disagree — high correlation with real issues |
-| `false_positive_rate` | Findings that close without remediation |
-| `sod_violation_count` | Generator = Reviewer events; target = 0 |
-| `generator_drift_delta` | Detection pattern change after model version update |
+---
 
-### 8.1 Multi-Tier Review (for high-risk tasks)
+### 8.1 Performance Evaluation
 
-High-risk tasks (`risk = high`) invoke a triangulated review:
+**Question**: Did the agent do the job correctly and efficiently?
+
+| Metric | Description | Target |
+|--------|-------------|--------|
+| `task_completion_rate` | Output satisfies all acceptance criteria | 100% |
+| `first_pass_rate` | Tasks passing evaluation without rework | > 85% |
+| `output_quality_score` | Rubric-based score against acceptance criteria | ≥ 0.8 |
+| `latency_vs_baseline` | Time taken vs. established agent baseline | ≤ 1.2× |
+| `subtask_success_rate` | % of sub-tasks completed without escalation | > 90% |
+
+---
+
+### 8.2 Security Evaluation
+
+**Question**: Did the agent stay within its privilege boundary and produce safe outputs?
+
+| Check | Description | Failure Action |
+|-------|-------------|----------------|
+| **Privilege adherence** | Actor never received raw external content | Hard fail; security event logged |
+| **SoD compliance** | Execution agent ≠ evaluation agent | Hard block if same lineage |
+| **Prompt injection detection** | Scan output for signs of injected instruction leakage | Escalate to human |
+| **Provenance completeness** | All outputs tagged `@generatedBy`, `@reviewedBy` | Fail if missing |
+| **Coaching compliance** | Agent respected injected constraints | Log violation; reputation penalty |
+| **Output sanitization** | No credential, PII, or secret leakage in artifact | Hard fail |
+
+For high-risk tasks, a multi-tier review applies:
+```
+Tier 0: Deterministic scan (secrets, SAST, dangerous API usage — not LLM-based)
+Tier 1: Independent LLM reviewer (different vendor from executor)
+Tier 2: Adversarial LLM reviewer (different from both executor and Tier-1)
+Tier 3: Adjudication gate — deduplicates findings, routes disagreements to human
+```
+
+---
+
+### 8.3 Cost Evaluation
+
+**Question**: Was the agent economically efficient? Is this agent worth rehiring?
+
+| Metric | Description | Target |
+|--------|-------------|--------|
+| `spend_vs_budget` | Actual token spend vs. declared budget ceiling | ≤ 100% |
+| `cost_per_task_type` | Average spend by task category | Tracked; used for future budgeting |
+| `budget_variance` | Deviation from estimate; high variance → inaccurate self-reporting | < ±20% |
+| `cost_efficiency_ratio` | Output quality score / token spend | Tracked per agent for comparison |
+| `roi_estimate` | Value of output vs. cost (human-evaluated for strategic tasks) | Qualitative |
+
+Cost evaluation results update the agent's `cost_profile` in the registry and inform future JD budget ceilings.
+
+---
+
+### 8.4 Aggregate Verdict and Reputation Update
+
+All three pillar scores are combined into a single task verdict:
 
 ```
-Tier 0: Deterministic baseline (SAST/secrets scan — not LLM-based, cannot be prompt-injected)
-Tier 1: Primary LLM Reviewer (different vendor from executor) — finds vulnerabilities
-Tier 2: Adversarial LLM Reviewer (different from both executor and Tier-1) — attempts to find what Tier-1 missed
-Tier 3: Adjudication gate — merges/deduplicates, scores severity, routes disagreements to human
+verdict = "pass"      if performance ≥ 0.8 AND security = clean AND spend ≤ budget
+verdict = "fail"      if performance < 0.6 OR any security hard-fail
+verdict = "escalate"  otherwise (human reviews before close)
 ```
+
+The verdict feeds directly into the Agent Registry (§4.5) to update reputation score, cost profile, and qualification status.
 
 ---
 
@@ -432,8 +564,7 @@ interface ProvenanceTags {
 
 ## 12. References
 
-1. Tsao, W-K. & Cheng, D. — "Framework Design Over Model Intelligence" (Trend Micro AI Lab) — arXiv:2603.13424v1
+1. Tsao, W-K. & Cheng, D. — "Agent Privilege Separation in OpenClaw: A Structural Defense Against Prompt Injection" — arXiv:2603.13424v1
 2. Anthropic Engineering — "Harness Design for Long-Running Apps" — anthropic.com/engineering/harness-design-long-running-apps
 3. Girard, D. — "Separation-of-Duties-First AI Code Security" — TrendAI Security for AI, March 2026
-4. Paperclip platform architecture — `/Users/sparkt/2026C/paperclip`
-5. OpenClaw prompt injection defense pattern — `tech-study-notes/openclaudepromptinjection`
+4. Paperclip — Multi-agent orchestration control plane — github.com/paperclipai/paperclip
