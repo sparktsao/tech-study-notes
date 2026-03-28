@@ -2,6 +2,14 @@
 ## An Agent Ticket System to Find the Right NemoClaw
 ### _Make your Agents work together faster, better and safer_
 
+<div align="center">
+  <img src="claw.png" alt="Finding NEMO — Are you the right NEMO to take my tickets?" width="620"/>
+  <br/>
+  <sub><strong>NEMO: Network of Execution and Management Orchestration</strong> · Finding NEMO Proposal v1.0 · March 2026</sub>
+</div>
+
+---
+
 > **NEMO**: **N**etwork of **E**xecution and **M**anagement **O**rchestration
 > _"An agent ticket system that routes every task to the right NemoClaw"_
 
