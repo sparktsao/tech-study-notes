@@ -38,9 +38,8 @@ Finding NEMO synthesizes ideas from multiple layers of research and tooling:
 | Layer | Source | Contribution |
 |-------|--------|-------------|
 | **Orchestration control plane** | [Paperclip](https://github.com/paperclipai/paperclip) | Persistent task queue, atomic checkout, budget enforcement, heartbeat loop, goal ancestry — the "company OS" for agents |
-| **Framework performance research** | Tsao & Cheng — arXiv:2603.13424v1 | Same LLM in a better framework achieves 50% more task success; framework design, not model choice, is the primary lever |
+| **Framework design & agent security** | Tsao & Cheng — openclaudepromptinjection (arXiv:2603.13424v1) | Framework design drives 50% of task performance delta; same research produces the OpenClaw Reader→Actor isolation pattern that keeps untrusted data away from privileged agents |
 | **Long-running agent harness** | Anthropic Engineering | Checkpointing, observability, and recovery patterns for agents that run beyond a single context window |
-| **Prompt injection defense** | OpenClaw / openclaudepromptinjection | Reader→Actor isolation: untrusted data never reaches a privileged agent; structured JSON is the trust boundary |
 | **Security & independence** | Girard, TrendAI — SoD-First AI Code Security (March 2026) | The generator must never be the reviewer; multi-LLM independence, blind review, provenance tagging |
 
 ### Execution Runtime — OpenShell and NemoClaw
@@ -57,10 +56,9 @@ These principles are non-negotiable and come directly from the three reference p
 
 | Principle | Source | Implication |
 |-----------|--------|-------------|
-| **Framework design drives performance** | arXiv:2603.13424v1 — Tsao & Cheng (Trend Micro AI Lab) | Agent selection and framework structure matter as much as model capability. Same LLM in a better framework = 50% performance delta. |
+| **Framework design drives performance** | Tsao & Cheng — openclaudepromptinjection (arXiv:2603.13424v1) | Agent selection and framework structure matter as much as model capability. Same LLM in a better framework = 50% performance delta. The same research yields the OpenClaw Reader→Actor isolation pattern: untrusted data is sanitized by a read-only Reader; only structured JSON reaches the privileged Actor. |
 | **Separation of Duties (SoD)** | Girard, TrendAI (March 2026) | The agent that generates output must never be the agent that certifies it. Generator ≠ Reviewer. Execution ≠ Evaluation. |
 | **Harness design for long-running tasks** | Anthropic Engineering | Long tasks must be checkpointable, observable, and recoverable. Agents operate via heartbeat loops, not fire-and-forget. |
-| **Prompt injection isolation** | OpenClaw / openclaudepromptinjection | Untrusted external data never reaches a privileged actor. A read-only Reader agent sanitizes first; a structured JSON summary is passed to the Actor. |
 
 ---
 
