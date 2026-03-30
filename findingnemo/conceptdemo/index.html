@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finding NEMO — Control Room</title>
+<style>
+/* ─── Reset & Variables ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg0: #0d1117;
+  --bg1: #161b22;
+  --bg2: #1c2128;
+  --bg3: #22272e;
+  --border: #30363d;
+  --border-subtle: #21262d;
+  --text0: #e6edf3;
+  --text1: #c9d1d9;
+  --text2: #8b949e;
+  --text3: #656d76;
+  --blue:  #58a6ff;
+  --blue2: #1f6feb;
+  --green: #3fb950;
+  --orange:#d29922;
+  --red:   #f85149;
+  --purple:#bc8cff;
+  --cyan:  #39d353;
+  --accent: #388bfd;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+html, body { height: 100%; font-family: var(--font); background: var(--bg0); color: var(--text0); font-size: 13px; line-height: 1.5; }
+
+/* ─── Layout ──────────────────────────────────────────────────────── */
+#app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+#topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; height: 48px; background: var(--bg1);
+  border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10;
+}
+#topbar .brand { display: flex; align-items: center; gap: 10px; }
+#topbar .brand-name { font-size: 15px; font-weight: 700; letter-spacing: .5px; color: var(--text0); }
+#topbar .brand-sub { font-size: 11px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; }
+.nemo-logo { width: 28px; height: 28px; background: linear-gradient(135deg,#1f6feb,#388bfd); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #fff; }
+
+#body { display: flex; flex: 1; overflow: hidden; }
+
+/* ─── Sidebar ─────────────────────────────────────────────────────── */
+#sidebar {
+  width: 220px; flex-shrink: 0; background: var(--bg1);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-section { padding: 12px 12px 4px; display: flex; align-items: center; justify-content: space-between; }
+.sidebar-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .7px; }
+.sidebar-action { font-size: 11px; color: var(--blue); cursor: pointer; }
+.sidebar-action:hover { text-decoration: underline; }
+.project-list { overflow-y: auto; flex: 1; padding-bottom: 12px; }
+.project-item {
+  padding: 6px 12px; cursor: pointer; border-radius: 0;
+  display: flex; flex-direction: column; gap: 2px;
+  border-left: 2px solid transparent; transition: background .12s;
+}
+.project-item:hover { background: var(--bg2); }
+.project-item.active { background: var(--bg2); border-left-color: var(--blue); }
+.project-item .pname { font-size: 12px; color: var(--text0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.project-item .pmeta { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+.dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.dot-green  { background: var(--green); }
+.dot-blue   { background: var(--blue); }
+.dot-gray   { background: var(--text3); }
+.dot-red    { background: var(--red); }
+.dot-orange { background: var(--orange); }
+
+/* ─── Main + Detail ───────────────────────────────────────────────── */
+#main { flex: 1; overflow: hidden; display: flex; flex-direction: row; }
+#content { flex: 1; overflow-y: auto; padding: 0; display: flex; flex-direction: column; }
+#detail-panel {
+  width: 340px; flex-shrink: 0; border-left: 1px solid var(--border);
+  background: var(--bg1); overflow-y: auto; display: flex; flex-direction: column;
+}
+
+/* ─── Project Header ──────────────────────────────────────────────── */
+#proj-header {
+  padding: 20px 24px 16px; border-bottom: 1px solid var(--border); background: var(--bg1);
+}
+.proj-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.proj-title { font-size: 20px; font-weight: 700; color: var(--text0); display: flex; align-items: center; gap: 8px; }
+.proj-desc { font-size: 12px; color: var(--text2); max-width: 680px; line-height: 1.6; }
+.proj-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.btn { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg2); color: var(--text0); transition: background .12s; }
+.btn:hover { background: var(--bg3); }
+.btn-primary { background: var(--blue2); border-color: var(--blue2); color: #fff; }
+.btn-primary:hover { background: #1a7de0; }
+.btn-green { background: #196c2e; border-color: var(--green); color: var(--green); }
+.btn-green:hover { background: #1e8038; }
+
+/* ─── Stats Row ───────────────────────────────────────────────────── */
+.stats-row {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  border-bottom: 1px solid var(--border); background: var(--bg1);
+}
+.stat-cell { padding: 14px 24px; border-right: 1px solid var(--border-subtle); }
+.stat-cell:last-child { border-right: none; }
+.stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .7px; color: var(--text2); margin-bottom: 4px; }
+.stat-val { font-size: 26px; font-weight: 700; color: var(--text0); }
+.stat-val.s-green  { color: var(--green); }
+.stat-val.s-blue   { color: var(--blue); }
+.stat-val.s-orange { color: var(--orange); }
+.stat-val.s-red    { color: var(--red); }
+
+/* ─── Panel sections ──────────────────────────────────────────────── */
+.panel-section { padding: 16px 24px; border-bottom: 1px solid var(--border); }
+.panel-section-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase;
+  letter-spacing: .7px; margin-bottom: 12px;
+}
+.panel-section-hdr .badge { font-size: 10px; background: var(--bg3); border: 1px solid var(--border);
+  padding: 1px 6px; border-radius: 10px; color: var(--text2); text-transform: none; letter-spacing: 0; }
+
+/* ─── WBS / DAG Panel ─────────────────────────────────────────────── */
+#wbs-panel { padding: 16px 24px; background: var(--bg0); border-bottom: 1px solid var(--border); }
+.wbs-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.wbs-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .7px; color: var(--text2); }
+.legend { display: flex; gap: 12px; align-items: center; }
+.legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text2); }
+.legend-box { width: 10px; height: 10px; border-radius: 2px; }
+
+#dag-svg-wrap {
+  background: var(--bg1); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px; overflow-x: auto; position: relative;
+}
+#dag-svg { display: block; margin: 0 auto; }
+
+/* node styles applied via JS */
+.dag-node { cursor: pointer; transition: filter .15s; }
+.dag-node:hover { filter: brightness(1.2); }
+.dag-node.selected rect { stroke-width: 2.5 !important; }
+
+/* ─── Tooltip ─────────────────────────────────────────────────────── */
+#tooltip {
+  position: fixed; z-index: 9999; pointer-events: none;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 14px; width: 280px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5); display: none; font-size: 12px;
+}
+#tooltip .tt-title { font-weight: 600; color: var(--text0); margin-bottom: 6px; line-height: 1.4; }
+#tooltip .tt-desc  { color: var(--text2); margin-bottom: 8px; line-height: 1.5; font-size: 11px; }
+#tooltip .tt-row   { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+#tooltip .tt-key   { color: var(--text2); font-size: 11px; }
+#tooltip .tt-val   { color: var(--text0); font-size: 11px; font-weight: 500; }
+#tooltip .tt-bar-wrap { background: var(--bg3); border-radius: 3px; height: 4px; flex: 1; margin: 0 8px; overflow: hidden; }
+#tooltip .tt-bar   { height: 100%; border-radius: 3px; transition: width .3s; }
+#tooltip .tt-caps  { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+#tooltip .tt-cap-label { color: var(--text2); font-size: 10px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+#tooltip .tt-tags  { display: flex; flex-wrap: wrap; gap: 4px; }
+#tooltip .tt-tag   { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 1px 6px; font-size: 10px; color: var(--text2); font-family: var(--font-mono); }
+#tooltip .tt-sod   { margin-top: 8px; padding: 6px 8px; background: rgba(210,153,34,.1);
+  border: 1px solid rgba(210,153,34,.3); border-radius: 5px; color: var(--orange); font-size: 11px; }
+#tooltip .tt-badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; margin-bottom: 6px; }
+
+/* ─── Task List ───────────────────────────────────────────────────── */
+#tasks-panel { padding: 0 24px 16px; background: var(--bg0); }
+.task-table { width: 100%; border-collapse: collapse; }
+.task-table th {
+  text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .7px; color: var(--text2); padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.task-table td { padding: 10px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top; }
+.task-row { cursor: pointer; transition: background .1s; }
+.task-row:hover { background: var(--bg1); }
+.task-row.selected { background: rgba(56,139,253,.08); }
+.task-name { font-weight: 500; color: var(--text0); font-size: 12px; margin-bottom: 3px; }
+.task-subdesc { font-size: 11px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 340px; }
+.status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; white-space: nowrap;
+}
+.s-completed { background: rgba(63,185,80,.15); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+.s-running   { background: rgba(88,166,255,.15); color: var(--blue);  border: 1px solid rgba(88,166,255,.3); }
+.s-queued    { background: rgba(139,148,158,.15); color: var(--text2); border: 1px solid var(--border); }
+.s-blocked   { background: rgba(210,153,34,.12);  color: var(--orange);border: 1px solid rgba(210,153,34,.3); }
+.s-failed    { background: rgba(248,81,73,.15);   color: var(--red);   border: 1px solid rgba(248,81,73,.3); }
+.time-est { font-family: var(--font-mono); font-size: 11px; color: var(--text2); white-space: nowrap; }
+.mini-prog-wrap { background: var(--bg3); border-radius: 3px; height: 3px; width: 60px; overflow: hidden; margin-top: 4px; }
+.mini-prog { height: 100%; border-radius: 3px; }
+
+/* ─── Detail Panel ────────────────────────────────────────────────── */
+.detail-hdr {
+  padding: 16px 16px 12px; border-bottom: 1px solid var(--border);
+  background: var(--bg1); position: sticky; top: 0; z-index: 5;
+}
+.detail-title { font-size: 13px; font-weight: 600; color: var(--text0); line-height: 1.4; margin-bottom: 8px; }
+.detail-desc  { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.detail-btns  { display: flex; gap: 6px; margin-top: 10px; }
+.detail-btn { padding: 4px 10px; border-radius: 5px; font-size: 11px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg2); color: var(--text0); }
+.detail-btn:hover { background: var(--bg3); }
+.detail-btn.primary { background: var(--blue2); border-color: var(--blue2); color: #fff; }
+.detail-btn.green   { background: rgba(63,185,80,.15); border-color: var(--green); color: var(--green); }
+
+.detail-body { padding: 12px 16px; }
+.detail-row { margin-bottom: 14px; }
+.detail-row-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
+  color: var(--text2); margin-bottom: 5px; }
+.detail-row-val { font-size: 12px; color: var(--text1); line-height: 1.5; }
+.criteria-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.criteria-list li { display: flex; align-items: flex-start; gap: 6px; font-size: 11px; color: var(--text2); line-height: 1.4; }
+.crit-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; margin-top: 5px; }
+.caps-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.cap-tag { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 2px 7px; font-size: 10px; color: var(--text2); font-family: var(--font-mono); }
+
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.metric-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+.metric-card .mk { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+.metric-card .mv { font-size: 16px; font-weight: 700; color: var(--text0); }
+.metric-card .mb { background: var(--bg3); border-radius: 3px; height: 3px; margin-top: 5px; overflow: hidden; }
+.metric-card .mf { height: 100%; border-radius: 3px; }
+
+.dep-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.dep-tag { display: flex; align-items: center; gap: 4px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: var(--text1); }
+.dep-check { color: var(--green); font-size: 10px; }
+.dep-pend  { color: var(--orange); font-size: 10px; }
+
+.sod-badge { display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+  background: rgba(210,153,34,.08); border: 1px solid rgba(210,153,34,.3);
+  border-radius: 5px; font-size: 11px; color: var(--orange); margin-top: 6px; }
+
+.timing-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); }
+.timing-val { color: var(--text0); font-family: var(--font-mono); }
+
+.empty-panel { padding: 40px 16px; text-align: center; color: var(--text2); font-size: 12px; }
+.empty-panel .ep-icon { font-size: 32px; margin-bottom: 8px; opacity: .4; }
+
+/* ─── Events ──────────────────────────────────────────────────────── */
+#events-panel { padding: 16px 24px; background: var(--bg0); }
+.event-item { display: flex; align-items: flex-start; gap: 10px;
+  padding: 6px 0; border-bottom: 1px solid var(--border-subtle); font-size: 11px; }
+.event-item:last-child { border-bottom: none; }
+.event-time { color: var(--text3); white-space: nowrap; font-family: var(--font-mono); }
+.event-msg  { color: var(--text2); }
+.event-msg strong { color: var(--text1); }
+
+/* ─── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ─── Pulse animation for running tasks ───────────────────────────── */
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.pulse { animation: pulse 2s ease-in-out infinite; }
+
+/* ─── New project form ────────────────────────────────────────────── */
+.new-proj-form { padding: 16px 24px; background: var(--bg1); border-top: 1px solid var(--border); }
+.form-row { margin-bottom: 10px; }
+.form-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text2); margin-bottom: 4px; }
+.form-input, .form-textarea {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 7px 10px; color: var(--text0); font-family: var(--font);
+  font-size: 12px; outline: none; transition: border-color .15s;
+}
+.form-input:focus, .form-textarea:focus { border-color: var(--blue); }
+.form-textarea { resize: vertical; min-height: 60px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Top Bar -->
+  <div id="topbar">
+    <div class="brand">
+      <div class="nemo-logo">N</div>
+      <div>
+        <div class="brand-name">NEMO</div>
+      </div>
+      <div class="brand-sub">Control Room</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span style="font-size:11px;color:var(--text2);">11 projects · updated now</span>
+      <button class="btn btn-green" onclick="runScheduler()">▶ Run scheduler</button>
+    </div>
+  </div>
+
+  <div id="body">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div class="sidebar-section">
+        <span class="sidebar-label">Projects</span>
+        <span class="sidebar-action" onclick="alert('New project')">+ New</span>
+      </div>
+      <div class="sidebar-section" style="padding-top:4px;">
+        <span class="sidebar-label" style="font-size:10px;">Legacy UI</span>
+      </div>
+      <div class="project-list" id="project-list"></div>
+    </div>
+
+    <!-- Main + Detail -->
+    <div id="main">
+      <div id="content">
+
+        <!-- Project Header -->
+        <div id="proj-header">
+          <div class="proj-title-row">
+            <div class="proj-title">
+              <span class="dot dot-blue pulse" id="proj-status-dot"></span>
+              <span id="proj-title-text">Build a Bakery Website!</span>
+            </div>
+            <div class="proj-btns">
+              <button class="btn btn-primary">Plan</button>
+              <button class="btn">Refresh</button>
+              <button class="btn">Preview</button>
+            </div>
+          </div>
+          <div class="proj-desc" id="proj-desc">
+            Build a simple static bakery landing page. Create a previewable index.html with a hero section,
+            three featured products, about section, hours, location, and contact section.
+            Keep it self-contained so the preview link works directly.
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-row">
+          <div class="stat-cell">
+            <div class="stat-label">Accepted</div>
+            <div class="stat-val s-green" id="stat-accepted">1</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-label">Running</div>
+            <div class="stat-val s-blue" id="stat-running">2</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-label">Queued</div>
+            <div class="stat-val" id="stat-queued">2</div>
+          </div>
+          <div class="stat-cell">
+            <div class="stat-label">Needs Rework</div>
+            <div class="stat-val s-red" id="stat-rework">0</div>
+          </div>
+        </div>
+
+        <!-- Planner Summary -->
+        <div style="padding:10px 24px 6px;background:var(--bg1);border-bottom:1px solid var(--border);">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);margin-bottom:4px;">Planner Summary</div>
+          <div style="font-size:12px;color:var(--text2);">
+            Adaptive decomposition: 5 tasks in a DAG (2 parallel tracks). Task-2 and Task-3 run concurrently.
+            SoD enforced: Task-3 (build) and Task-4 (review) must be different agents.
+            Final validation (Task-5) gates on both tracks passing.
+          </div>
+        </div>
+
+        <!-- WBS / DAG Panel -->
+        <div id="wbs-panel">
+          <div class="wbs-hdr">
+            <div class="wbs-title">Work Breakdown Structure — Task DAG</div>
+            <div class="legend">
+              <div class="legend-item"><div class="legend-box" style="background:var(--green)"></div>Completed</div>
+              <div class="legend-item"><div class="legend-box" style="background:var(--blue)"></div>Running</div>
+              <div class="legend-item"><div class="legend-box" style="background:var(--text3)"></div>Queued</div>
+              <div class="legend-item"><div class="legend-box" style="background:var(--orange)"></div>Blocked</div>
+              <div class="legend-item" style="gap:4px;">
+                <div style="width:18px;height:2px;border-top:2px dashed var(--orange);"></div>
+                <span>SoD constraint</span>
+              </div>
+            </div>
+          </div>
+          <div id="dag-svg-wrap">
+            <svg id="dag-svg" width="780" height="210"></svg>
+          </div>
+        </div>
+
+        <!-- Task List -->
+        <div id="tasks-panel" style="padding-top:12px;">
+          <div class="panel-section-hdr" style="padding:0 0 8px 0;border-bottom:1px solid var(--border);margin-bottom:0;">
+            <span>Tasks</span>
+            <span class="badge">5</span>
+          </div>
+          <table class="task-table" id="task-table">
+            <thead>
+              <tr>
+                <th>Task</th>
+                <th>Status</th>
+                <th>Agent</th>
+                <th>Progress</th>
+                <th style="text-align:right">Est.</th>
+              </tr>
+            </thead>
+            <tbody id="task-tbody"></tbody>
+          </table>
+        </div>
+
+        <!-- Events -->
+        <div id="events-panel">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);margin-bottom:8px;">Events</div>
+          <div id="events-list"></div>
+        </div>
+
+        <!-- New Project -->
+        <div class="new-proj-form">
+          <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.7px;">New Project</div>
+          <div class="form-row"><div class="form-label">Title</div><input class="form-input" placeholder="My new project"></div>
+          <div class="form-row"><div class="form-label">Request</div><textarea class="form-textarea" placeholder="Describe the work, constraints, and deliverables."></textarea></div>
+          <button class="btn btn-primary">Create</button>
+        </div>
+
+      </div><!-- /#content -->
+
+      <!-- Detail Panel -->
+      <div id="detail-panel">
+        <div id="detail-content">
+          <div class="empty-panel">
+            <div class="ep-icon">🎯</div>
+            <div>Select a task to view details</div>
+            <div style="margin-top:4px;font-size:11px;color:var(--text3);">or hover over the DAG to preview</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#main -->
+  </div><!-- /#body -->
+</div><!-- /#app -->
+
+<!-- Tooltip -->
+<div id="tooltip"></div>
+
+<script>
+// ─── Data ─────────────────────────────────────────────────────────────
+const PROJECTS = [
+  { id:'p1', name:'Build a Bakery Website!',        status:'running',    active:true  },
+  { id:'p2', name:'Post-Fix E2E Bakery',            status:'completed',  active:false },
+  { id:'p3', name:'Fresh E2E Test Run 2',           status:'planning',   active:false },
+  { id:'p4', name:'Fresh E2E Test Run',             status:'draft',      active:false },
+  { id:'p5', name:'E2E Workspace Preview Test v2',  status:'completed',  active:false },
+  { id:'p6', name:'E2E Workspace Preview Test',     status:'draft',      active:false },
+  { id:'p7', name:'Workspace Smoke Test',           status:'draft',      active:false },
+  { id:'p8', name:'Live E2E Bakery',                status:'failed',     active:false },
+  { id:'p9', name:'E2E Test',                       status:'draft',      active:false },
+  { id:'p10',name:'Title: Local Bakery Landing Page',status:'draft',     active:false },
+  { id:'p11',name:'Build a simple landing page for a...', status:'completed', active:false },
+];
+
+const TASKS = [
+  {
+    id:'task1', seq:1,
+    title:'Define bakery landing page content and section layout',
+    description:'Draft the exact section order, section copy, and content blocks for a simple bakery landing page. Include hero, products, about, hours, location, contact.',
+    type:'research', status:'completed',
+    dependencies:[],
+    agent:'Agent-A', agentType:'Planner / Summarizer', agentCount:1,
+    budget_cents:600, spent_cents:590, progress:100,
+    quality:0.94, risk:'low', riskColor:'#3fb950',
+    acceptance_criteria:[
+      'Section order defined: Hero → Products → About → Hours → Location → Contact',
+      'Copy drafted for each section with placeholder content',
+      'Output schema compatible with HTML structure task input'
+    ],
+    capabilities:['content-planning','web-structure-design','output-schema'],
+    retry_count:0, max_retries:2,
+    estimated_s:600, sod:false,
+    events:[
+      { t:'09:01:04', msg:'Agent-A checked out task1' },
+      { t:'09:01:12', msg:'Content outline drafted' },
+      { t:'09:11:18', msg:'Evaluation: pass (quality 0.94)' },
+    ]
+  },
+  {
+    id:'task2', seq:2,
+    title:'Add polished embedded CSS for bakery landing page',
+    description:'Design and implement embedded CSS inside index.html to give the bakery page a clean, inviting visual style. All styles must be self-contained in a <style> tag.',
+    type:'build', status:'running',
+    dependencies:['task1'],
+    agent:'Agent-B', agentType:'Builder / CSS Designer', agentCount:1,
+    budget_cents:1500, spent_cents:820, progress:55,
+    quality:null, risk:'low', riskColor:'#3fb950',
+    acceptance_criteria:[
+      'CSS embedded in <style> tag — no external stylesheets',
+      'Responsive layout works on mobile and desktop',
+      'Bakery brand colors and typography applied',
+      'No external font or icon dependencies'
+    ],
+    capabilities:['css-design','web-styling','responsive-layout','self-contained-output'],
+    retry_count:0, max_retries:2,
+    estimated_s:1500, sod:false,
+    events:[
+      { t:'09:11:25', msg:'Agent-B checked out task2 (deps satisfied)' },
+      { t:'09:15:33', msg:'CSS skeleton committed to workspace' },
+      { t:'09:22:10', msg:'Heartbeat — 55% complete' },
+    ]
+  },
+  {
+    id:'task3', seq:3,
+    title:'Implement self-contained index.html structure',
+    description:'Create index.html in the project workspace with the full semantic HTML structure for all sections. Must be self-contained — no external assets.',
+    type:'build', status:'running',
+    dependencies:['task1'],
+    agent:'Agent-B2', agentType:'Builder / HTML', agentCount:1,
+    budget_cents:1200, spent_cents:610, progress:51,
+    quality:null, risk:'medium', riskColor:'#d29922',
+    acceptance_criteria:[
+      'index.html contains all required sections (semantic HTML5)',
+      'No external dependencies — opens directly in browser',
+      'Valid HTML5 structure passing W3C validation',
+      'Placeholder content matches content plan from task1'
+    ],
+    capabilities:['html-generation','semantic-markup','self-contained-output','w3c-validation'],
+    retry_count:0, max_retries:2,
+    estimated_s:1200, sod:true, sodNote:'Task-4 reviewer must be a different agent (SoD)',
+    events:[
+      { t:'09:11:27', msg:'Agent-B2 checked out task3 (parallel with task2)' },
+      { t:'09:18:44', msg:'HTML skeleton committed' },
+      { t:'09:22:15', msg:'Heartbeat — 51% complete' },
+    ]
+  },
+  {
+    id:'task4', seq:4,
+    title:'Security & SoD review of HTML structure',
+    description:'Independent audit of index.html by a different agent lineage. Verify no XSS vectors, privilege boundary respected, and all acceptance criteria from task3 met.',
+    type:'review', status:'blocked',
+    dependencies:['task3'],
+    agent:'Agent-C', agentType:'Reviewer (different lineage — SoD)', agentCount:1,
+    budget_cents:800, spent_cents:0, progress:0,
+    quality:null, risk:'low', riskColor:'#3fb950',
+    acceptance_criteria:[
+      'No XSS vectors or unsafe inline event handlers present',
+      'Reviewer model lineage differs from task3 builder (SoD hard check)',
+      'All task3 acceptance criteria independently verified',
+      'Output: structured pass/fail/escalate verdict with findings'
+    ],
+    capabilities:['security-review','html-audit','sod-enforcement','xss-detection'],
+    retry_count:0, max_retries:1,
+    estimated_s:800, sod:true, sodNote:'Must use different model vendor from task3 builder',
+    events:[
+      { t:'09:22:16', msg:'task4 queued — waiting for task3 completion' },
+    ]
+  },
+  {
+    id:'task5', seq:5,
+    title:'Validate direct preview, completeness, and content quality',
+    description:'Review the final index.html to verify it satisfies the project request when opened directly as a static file. Check all sections, self-containment, and layout.',
+    type:'review', status:'blocked',
+    dependencies:['task2','task4'],
+    agent:'Agent-D', agentType:'Evaluator (independent)', agentCount:1,
+    budget_cents:900, spent_cents:0, progress:0,
+    quality:null, risk:'low', riskColor:'#3fb950',
+    acceptance_criteria:[
+      'Directly opening index.html renders bakery landing page without errors',
+      'All sections present: hero, 3 products, about, hours, location, contact',
+      'No external dependencies required for page to appear complete',
+      'Page is suitable for preview via a direct file or static preview link'
+    ],
+    capabilities:['evaluation','content-quality-check','preview-validation','completeness-audit'],
+    retry_count:0, max_retries:2,
+    estimated_s:900, sod:false,
+    events:[
+      { t:'09:22:16', msg:'task5 queued — waiting for task2 + task4' },
+    ]
+  }
+];
+
+const EVENTS = [
+  { t:'09:22:16', msg:'<strong>task5</strong> queued — waiting for task2 + task4' },
+  { t:'09:22:15', msg:'<strong>task3</strong> heartbeat — 51% complete, Agent-B2' },
+  { t:'09:22:10', msg:'<strong>task2</strong> heartbeat — 55% complete, Agent-B' },
+  { t:'09:11:27', msg:'<strong>task3</strong> checked out by Agent-B2 (parallel with task2, SoD enforced)' },
+  { t:'09:11:25', msg:'<strong>task2</strong> checked out by Agent-B' },
+  { t:'09:11:18', msg:'<strong>task1</strong> evaluation passed (quality 0.94) — 2 downstream tasks released' },
+  { t:'09:01:04', msg:'Planner decomposed objective into 5-task DAG' },
+];
+
+// ─── DAG Layout ────────────────────────────────────────────────────────
+// SVG: 780 × 210
+// task1: col0 → task2: col1 top, task3: col1 bot → task4: col2 bot → task5: col3 center
+const DAG_NODES = {
+  task1: { x:80,  y:105, w:130, h:44 },
+  task2: { x:270, y:50,  w:150, h:44 },
+  task3: { x:270, y:116, w:150, h:44 },
+  task4: { x:470, y:116, w:140, h:44 },
+  task5: { x:660, y:83,  w:100, h:44 },
+};
+const DAG_EDGES = [
+  { from:'task1', to:'task2', sod:false },
+  { from:'task1', to:'task3', sod:false },
+  { from:'task2', to:'task5', sod:false },
+  { from:'task3', to:'task4', sod:true  },
+  { from:'task4', to:'task5', sod:false },
+];
+
+// ─── Status helpers ────────────────────────────────────────────────────
+const STATUS_META = {
+  completed: { label:'Completed', color:'#3fb950', cls:'s-completed', dot:'dot-green'  },
+  running:   { label:'Running',   color:'#58a6ff', cls:'s-running',   dot:'dot-blue'   },
+  blocked:   { label:'Blocked',   color:'#d29922', cls:'s-blocked',   dot:'dot-orange' },
+  queued:    { label:'Queued',    color:'#8b949e', cls:'s-queued',    dot:'dot-gray'   },
+  failed:    { label:'Failed',    color:'#f85149', cls:'s-failed',    dot:'dot-red'    },
+  planning:  { label:'Planning',  color:'#58a6ff', cls:'s-running',   dot:'dot-blue'   },
+  draft:     { label:'Draft',     color:'#8b949e', cls:'s-queued',    dot:'dot-gray'   },
+  completed_proj: { label:'Done', color:'#3fb950', cls:'s-completed', dot:'dot-green'  },
+};
+
+function statusMeta(s) { return STATUS_META[s] || STATUS_META.queued; }
+
+// ─── Build Sidebar ─────────────────────────────────────────────────────
+function buildSidebar() {
+  const el = document.getElementById('project-list');
+  el.innerHTML = PROJECTS.map(p => {
+    const m = statusMeta(p.status);
+    return `<div class="project-item ${p.active?'active':''}" onclick="selectProject('${p.id}')">
+      <div class="pname">${p.name}</div>
+      <div class="pmeta"><div class="dot ${m.dot}"></div><span>${m.label.toLowerCase()} · now</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ─── Build Task Table ──────────────────────────────────────────────────
+function buildTaskTable() {
+  const tbody = document.getElementById('task-tbody');
+  tbody.innerHTML = TASKS.map(t => {
+    const m = statusMeta(t.status);
+    const progColor = t.status==='completed'?'#3fb950': t.status==='running'?'#58a6ff':'#656d76';
+    return `<tr class="task-row" id="tr-${t.id}" onclick="selectTask('${t.id}')">
+      <td>
+        <div class="task-name">${t.title}</div>
+        <div class="task-subdesc">${t.description.slice(0,80)}…</div>
+        ${t.sod?`<div style="font-size:10px;color:var(--orange);margin-top:3px;">⚡ SoD constraint</div>`:''}
+      </td>
+      <td><span class="status-badge ${m.cls}"><span class="dot ${m.dot}" style="width:5px;height:5px;"></span>${m.label}</span></td>
+      <td style="font-size:11px;color:var(--text2);white-space:nowrap;">${t.agent}</td>
+      <td>
+        <div style="font-size:11px;color:var(--text2);">${t.progress}%</div>
+        <div class="mini-prog-wrap"><div class="mini-prog" style="width:${t.progress}%;background:${progColor}"></div></div>
+      </td>
+      <td style="text-align:right"><div class="time-est">${t.estimated_s}s est</div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Build Events ──────────────────────────────────────────────────────
+function buildEvents() {
+  const el = document.getElementById('events-list');
+  el.innerHTML = EVENTS.map(e => `<div class="event-item">
+    <span class="event-time">${e.t}</span>
+    <span class="event-msg">${e.msg}</span>
+  </div>`).join('');
+}
+
+// ─── DAG Rendering ─────────────────────────────────────────────────────
+function renderDAG() {
+  const svg = document.getElementById('dag-svg');
+  svg.innerHTML = '';
+
+  // Arrowhead marker
+  const defs = createSVG('defs');
+  const mkNorm = createMarker('arr-norm', '#8b949e');
+  const mkBlue = createMarker('arr-blue', '#58a6ff');
+  const mkGreen= createMarker('arr-green','#3fb950');
+  const mkOrange=createMarker('arr-orange','#d29922');
+  defs.appendChild(mkNorm); defs.appendChild(mkBlue);
+  defs.appendChild(mkGreen); defs.appendChild(mkOrange);
+  svg.appendChild(defs);
+
+  // Draw edges
+  DAG_EDGES.forEach(e => {
+    const fn = DAG_NODES[e.from]; const tn = DAG_NODES[e.to];
+    const ft = TASKS.find(t=>t.id===e.from); const tt2 = TASKS.find(t=>t.id===e.to);
+    const x1 = fn.x + fn.w, y1 = fn.y + fn.h/2;
+    const x2 = tn.x,        y2 = tn.y + tn.h/2;
+    const mx = (x1+x2)/2;
+
+    let color, marker;
+    if(e.sod) { color='#d29922'; marker='url(#arr-orange)'; }
+    else if(ft&&ft.status==='completed') { color='#3fb950'; marker='url(#arr-green)'; }
+    else { color='#8b949e'; marker='url(#arr-norm)'; }
+
+    const path = createSVG('path');
+    path.setAttribute('d', `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('marker-end', marker);
+    if(e.sod) {
+      path.setAttribute('stroke-dasharray','5,3');
+      path.setAttribute('stroke-width','1.5');
+    }
+    svg.appendChild(path);
+
+    // SoD lock icon
+    if(e.sod) {
+      const lx = mx - 6; const ly = (y1+y2)/2 - 7;
+      const lockG = createSVG('g');
+      const lockBg = createSVG('rect');
+      lockBg.setAttribute('x',lx-2); lockBg.setAttribute('y',ly-1);
+      lockBg.setAttribute('width',16); lockBg.setAttribute('height',14);
+      lockBg.setAttribute('rx','3'); lockBg.setAttribute('fill','#22272e');
+      lockBg.setAttribute('stroke','#d29922'); lockBg.setAttribute('stroke-width','1');
+      const lockT = createSVG('text');
+      lockT.setAttribute('x', lx+4); lockT.setAttribute('y', ly+9);
+      lockT.setAttribute('font-size','9'); lockT.setAttribute('fill','#d29922');
+      lockT.setAttribute('text-anchor','middle');
+      lockT.textContent = '🔒';
+      lockG.appendChild(lockBg); lockG.appendChild(lockT);
+      svg.appendChild(lockG);
+    }
+  });
+
+  // Draw nodes
+  TASKS.forEach(t => {
+    const n = DAG_NODES[t.id];
+    const m = statusMeta(t.status);
+    const g = createSVG('g');
+    g.setAttribute('class','dag-node');
+    g.setAttribute('id','dag-'+t.id);
+    g.setAttribute('transform',`translate(${n.x},${n.y})`);
+
+    // Shadow rect
+    const shadow = createSVG('rect');
+    shadow.setAttribute('x','2'); shadow.setAttribute('y','2');
+    shadow.setAttribute('width',n.w); shadow.setAttribute('height',n.h);
+    shadow.setAttribute('rx','6'); shadow.setAttribute('fill','rgba(0,0,0,.4)');
+    g.appendChild(shadow);
+
+    // Main rect
+    const rect = createSVG('rect');
+    rect.setAttribute('width',n.w); rect.setAttribute('height',n.h);
+    rect.setAttribute('rx','6');
+    rect.setAttribute('fill','#1c2128');
+    rect.setAttribute('stroke', m.color);
+    rect.setAttribute('stroke-width','1.5');
+    g.appendChild(rect);
+
+    // Status bar (left edge)
+    const sbar = createSVG('rect');
+    sbar.setAttribute('width','4'); sbar.setAttribute('height', n.h-12);
+    sbar.setAttribute('x','0'); sbar.setAttribute('y','6');
+    sbar.setAttribute('rx','2'); sbar.setAttribute('fill', m.color);
+    g.appendChild(sbar);
+
+    // Task number
+    const num = createSVG('text');
+    num.setAttribute('x','12'); num.setAttribute('y','14');
+    num.setAttribute('font-size','8'); num.setAttribute('fill','#8b949e');
+    num.setAttribute('font-family','monospace');
+    num.textContent = `#${t.seq}`;
+    g.appendChild(num);
+
+    // Task label (wrapped)
+    const words = t.title.split(' ');
+    let line1='', line2='';
+    let charCount = 0;
+    const maxChars = Math.floor(n.w / 6.5);
+    for(const w of words) {
+      if(charCount + w.length + 1 <= maxChars) { line1 += (line1?' ':'')+w; charCount+=w.length+1; }
+      else { line2 += (line2?' ':'')+w; }
+    }
+    const tl1 = createSVG('text');
+    tl1.setAttribute('x',n.w/2); tl1.setAttribute('y', line2 ? '22' : '26');
+    tl1.setAttribute('font-size','9.5'); tl1.setAttribute('fill','#c9d1d9');
+    tl1.setAttribute('text-anchor','middle'); tl1.setAttribute('font-weight','500');
+    tl1.textContent = line1.length > maxChars ? line1.slice(0,maxChars-1)+'…' : line1;
+    g.appendChild(tl1);
+
+    if(line2) {
+      const tl2 = createSVG('text');
+      tl2.setAttribute('x',n.w/2); tl2.setAttribute('y','32');
+      tl2.setAttribute('font-size','9.5'); tl2.setAttribute('fill','#c9d1d9');
+      tl2.setAttribute('text-anchor','middle');
+      tl2.textContent = line2.length > maxChars ? line2.slice(0,maxChars-1)+'…' : line2;
+      g.appendChild(tl2);
+    }
+
+    // Progress bar inside node
+    const barBg = createSVG('rect');
+    barBg.setAttribute('x','8'); barBg.setAttribute('y',n.h-10);
+    barBg.setAttribute('width',n.w-16); barBg.setAttribute('height','3');
+    barBg.setAttribute('rx','2'); barBg.setAttribute('fill','#30363d');
+    g.appendChild(barBg);
+    if(t.progress > 0) {
+      const barFg = createSVG('rect');
+      barFg.setAttribute('x','8'); barFg.setAttribute('y',n.h-10);
+      barFg.setAttribute('width', Math.round((n.w-16)*t.progress/100));
+      barFg.setAttribute('height','3');
+      barFg.setAttribute('rx','2'); barFg.setAttribute('fill', m.color);
+      g.appendChild(barFg);
+    }
+
+    // Running pulse indicator
+    if(t.status === 'running') {
+      const pcirc = createSVG('circle');
+      pcirc.setAttribute('cx', n.w-8); pcirc.setAttribute('cy', '8');
+      pcirc.setAttribute('r','3'); pcirc.setAttribute('fill','#58a6ff');
+      pcirc.setAttribute('class','pulse');
+      g.appendChild(pcirc);
+    }
+
+    // Events
+    g.addEventListener('mouseenter', (ev) => showTooltip(ev, t));
+    g.addEventListener('mousemove',  (ev) => moveTooltip(ev));
+    g.addEventListener('mouseleave', hideTooltip);
+    g.addEventListener('click', () => selectTask(t.id));
+
+    svg.appendChild(g);
+  });
+}
+
+function createSVG(tag) {
+  return document.createElementNS('http://www.w3.org/2000/svg', tag);
+}
+function createMarker(id, color) {
+  const m = createSVG('marker');
+  m.setAttribute('id',id); m.setAttribute('markerWidth','8'); m.setAttribute('markerHeight','6');
+  m.setAttribute('refX','7'); m.setAttribute('refY','3'); m.setAttribute('orient','auto');
+  const poly = createSVG('polygon');
+  poly.setAttribute('points','0 0, 8 3, 0 6'); poly.setAttribute('fill',color);
+  m.appendChild(poly); return m;
+}
+
+// ─── Tooltip ────────────────────────────────────────────────────────────
+let _ttEl = null;
+function showTooltip(ev, task) {
+  _ttEl = document.getElementById('tooltip');
+  const m = statusMeta(task.status);
+  const progColor = task.status==='completed'?'#3fb950':task.status==='running'?'#58a6ff':'#656d76';
+  const qualStr = task.quality != null ? task.quality.toFixed(2) : '—';
+  const depStr = task.dependencies.length === 0 ? 'None (root task)' :
+    task.dependencies.map(d => {
+      const dt = TASKS.find(t=>t.id===d);
+      const done = dt && dt.status==='completed';
+      return `<span class="dep-tag"><span class="${done?'dep-check':'dep-pend'}">${done?'✓':'⏳'}</span>${d}</span>`;
+    }).join('');
+
+  _ttEl.innerHTML = `
+    <div class="tt-badge ${m.cls}">${m.label}</div>
+    <div class="tt-title">${task.title}</div>
+    <div class="tt-desc">${task.description.slice(0,100)}…</div>
+    <div class="tt-row"><span class="tt-key">Agent</span><span class="tt-val">${task.agent} · ${task.agentType}</span></div>
+    <div class="tt-row"><span class="tt-key">Progress</span>
+      <div class="tt-bar-wrap"><div class="tt-bar" style="width:${task.progress}%;background:${progColor}"></div></div>
+      <span class="tt-val">${task.progress}%</span>
+    </div>
+    <div class="tt-row"><span class="tt-key">Cost</span><span class="tt-val">${task.spent_cents} / ${task.budget_cents} tokens</span></div>
+    <div class="tt-row"><span class="tt-key">Quality</span><span class="tt-val">${qualStr}</span></div>
+    <div class="tt-row"><span class="tt-key">Risk</span><span class="tt-val" style="color:${task.riskColor}">${task.risk.toUpperCase()}</span></div>
+    <div class="tt-row"><span class="tt-key">Deps</span><span style="display:flex;flex-wrap:wrap;gap:3px;flex:1;justify-content:flex-end">${depStr}</span></div>
+    ${task.sod ? `<div class="tt-sod">⚡ SoD constraint — ${task.sodNote}</div>` : ''}
+    <div class="tt-caps">
+      <div class="tt-cap-label">JD — Required Capabilities</div>
+      <div class="tt-tags">${task.capabilities.map(c=>`<span class="tt-tag">${c}</span>`).join('')}</div>
+    </div>`;
+  _ttEl.style.display = 'block';
+  moveTooltip(ev);
+}
+function moveTooltip(ev) {
+  if(!_ttEl) return;
+  let x = ev.clientX + 14, y = ev.clientY + 14;
+  const W = window.innerWidth, H = window.innerHeight;
+  if(x + 290 > W) x = ev.clientX - 290;
+  if(y + 280 > H) y = ev.clientY - 280;
+  _ttEl.style.left = x+'px'; _ttEl.style.top = y+'px';
+}
+function hideTooltip() {
+  document.getElementById('tooltip').style.display = 'none';
+  _ttEl = null;
+}
+
+// ─── Select Task ────────────────────────────────────────────────────────
+let selectedTask = null;
+function selectTask(id) {
+  selectedTask = id;
+  // Highlight table row
+  document.querySelectorAll('.task-row').forEach(r => r.classList.remove('selected'));
+  const tr = document.getElementById('tr-'+id);
+  if(tr) tr.classList.add('selected');
+  // Highlight DAG node
+  document.querySelectorAll('.dag-node').forEach(n => n.classList.remove('selected'));
+  const dn = document.getElementById('dag-'+id);
+  if(dn) dn.classList.add('selected');
+  // Render detail panel
+  renderDetail(TASKS.find(t=>t.id===id));
+}
+
+function renderDetail(task) {
+  const el = document.getElementById('detail-content');
+  const m = statusMeta(task.status);
+  const progColor = task.status==='completed'?'#3fb950':task.status==='running'?'#58a6ff':'#656d76';
+  const qualStr = task.quality != null ? task.quality.toFixed(2) : '—';
+  const costPct = Math.round(task.spent_cents/task.budget_cents*100);
+  const depItems = task.dependencies.length === 0 ?
+    '<span style="font-size:11px;color:var(--text3)">None — root task</span>' :
+    `<div class="dep-list">${task.dependencies.map(d=>{
+      const dt = TASKS.find(t=>t.id===d);
+      const done = dt&&dt.status==='completed';
+      return `<div class="dep-tag"><span class="${done?'dep-check':'dep-pend'}">${done?'✓':'⏳'}</span>${dt?dt.title.slice(0,30)+'…':d}</div>`;
+    }).join('')}</div>`;
+
+  el.innerHTML = `
+    <div class="detail-hdr">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
+        <span class="status-badge ${m.cls}"><span class="dot ${m.dot}" style="width:5px;height:5px;"></span>${m.label}</span>
+        <span style="font-size:10px;color:var(--text2);">${task.type} · #${task.seq}</span>
+      </div>
+      <div class="detail-title">${task.title}</div>
+      <div class="detail-desc">${task.description}</div>
+      <div class="detail-btns">
+        <button class="detail-btn">Retry</button>
+        <button class="detail-btn green">Accept</button>
+        <button class="detail-btn primary">Preview</button>
+      </div>
+    </div>
+    <div class="detail-body">
+
+      <div class="detail-row">
+        <div class="detail-row-label">Acceptance Criteria</div>
+        <ul class="criteria-list">
+          ${task.acceptance_criteria.map(c=>`<li><div class="crit-dot"></div><span>${c}</span></li>`).join('')}
+        </ul>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-row-label">Agent &amp; Capabilities</div>
+        <div class="detail-row-val" style="margin-bottom:6px;">${task.agent} — <span style="color:var(--text2)">${task.agentType}</span></div>
+        <div class="caps-list">${task.capabilities.map(c=>`<span class="cap-tag">${c}</span>`).join('')}</div>
+        ${task.sod ? `<div class="sod-badge">⚡ SoD: ${task.sodNote}</div>` : ''}
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-row-label">Metrics</div>
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="mk">Progress</div>
+            <div class="mv" style="color:${progColor}">${task.progress}%</div>
+            <div class="mb"><div class="mf" style="width:${task.progress}%;background:${progColor}"></div></div>
+          </div>
+          <div class="metric-card">
+            <div class="mk">Cost (tokens)</div>
+            <div class="mv">${task.spent_cents}<span style="font-size:11px;font-weight:400;color:var(--text2)"> / ${task.budget_cents}</span></div>
+            <div class="mb"><div class="mf" style="width:${costPct}%;background:${costPct>90?'#f85149':'#58a6ff'}"></div></div>
+          </div>
+          <div class="metric-card">
+            <div class="mk">Quality</div>
+            <div class="mv" style="color:${task.quality!=null?(task.quality>=0.8?'#3fb950':'#d29922'):'var(--text2)'}">${qualStr}</div>
+          </div>
+          <div class="metric-card">
+            <div class="mk">Risk</div>
+            <div class="mv" style="color:${task.riskColor};font-size:13px;">${task.risk.toUpperCase()}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-row-label">Dependencies</div>
+        ${depItems}
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-row-label">Retry</div>
+        <div class="detail-row-val">${task.retry_count} / ${task.max_retries} max retries</div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-row-label">Timing</div>
+        <div class="timing-row"><span>Estimate</span><span class="timing-val">${task.estimated_s}s</span></div>
+        <div class="timing-row"><span>Timeout</span><span class="timing-val">${Math.round(task.estimated_s*1.2)}s</span></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-row-label">Recent Activity</div>
+        ${task.events.map(e=>`<div class="event-item" style="padding:4px 0;">
+          <span class="event-time">${e.t}</span>
+          <span class="event-msg">${e.msg}</span>
+        </div>`).join('')}
+      </div>
+
+    </div>`;
+}
+
+// ─── Project Select ────────────────────────────────────────────────────
+function selectProject(id) {
+  document.querySelectorAll('.project-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+// ─── Run Scheduler ─────────────────────────────────────────────────────
+function runScheduler() {
+  const btn = event.currentTarget;
+  btn.textContent = '⟳ Scheduling…';
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.textContent = '▶ Run scheduler';
+    btn.disabled = false;
+    // Add a fake event
+    const el = document.getElementById('events-list');
+    const ev = document.createElement('div');
+    ev.className = 'event-item';
+    const now = new Date();
+    const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+    ev.innerHTML = `<span class="event-time">${ts}</span><span class="event-msg"><strong>Scheduler</strong> — heartbeat tick, 2 tasks running, 2 blocked</span>`;
+    el.insertBefore(ev, el.firstChild);
+  }, 1200);
+}
+
+// ─── Init ──────────────────────────────────────────────────────────────
+buildSidebar();
+buildTaskTable();
+buildEvents();
+renderDAG();
+
+// Auto-select first task
+selectTask('task1');
+
+// Simulate progress ticking for running tasks
+setInterval(() => {
+  ['task2','task3'].forEach(id => {
+    const t = TASKS.find(x=>x.id===id);
+    if(t && t.status==='running' && t.progress < 98) {
+      t.progress += Math.random() > .7 ? 1 : 0;
+      const tr = document.getElementById('tr-'+id);
+      if(tr) {
+        const progEl = tr.querySelectorAll('.mini-prog');
+        if(progEl[0]) progEl[0].style.width = t.progress+'%';
+        const pctEl = tr.querySelector('td:nth-child(4) div');
+        if(pctEl) pctEl.textContent = t.progress+'%';
+      }
+      if(selectedTask===id) renderDetail(t);
+    }
+  });
+}, 3000);
+</script>
+</body>
+</html>
