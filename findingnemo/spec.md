@@ -56,6 +56,32 @@ The execution layer is built on **OpenShell** and **NemoClaw**, enabling native 
 
 > The name is intentional: in a vast ocean of tasks, NEMO's job is not to do all the swimming — it is to find the *right claw* and hand off with confidence, then verify the catch independently.
 
+### NEMO in the Stack — Positioning vs Paperclip
+
+NEMO and Paperclip occupy **different but complementary layers** of the agentic stack. Building NEMO on top of a Paperclip-like control plane is the intended architecture, not a competition.
+
+| Layer | System | Responsibility |
+|-------|--------|---------------|
+| **Control plane** | Paperclip (or equivalent) | Org structure, task ownership, budget governance, audit trail, atomic checkout, approval gates |
+| **Execution plane** | Finding NEMO | DAG-based task decomposition, capability-aware agent routing, privilege-separated execution, multi-tier evaluation loops, memory management |
+
+**Paperclip is the company. NEMO is the execution engine the company runs.**
+
+Where Paperclip enforces *who owns what and whether it happened*, NEMO enforces *how it is executed safely and correctly*. A Paperclip task that checks out to a NemoClaw worker enters NEMO's execution pipeline: it is decomposed into a DAG, routed to qualified agents, passed through privilege separation, and evaluated independently before the Paperclip ticket closes.
+
+**NEMO's differentiating capabilities** relative to a raw Paperclip deployment:
+
+| Capability | NEMO adds |
+|-----------|-----------|
+| DAG execution | Tasks have declared dependencies; NEMO schedules the graph, not just the queue |
+| Adaptive planning | Planner decides agent count and topology dynamically per task complexity |
+| Multi-agent reasoning loops | Evaluate → Refine → Re-execute until acceptance criteria pass |
+| Security isolation | Structural privilege separation (Reader/Actor split) enforced at the platform level |
+| Capability-aware routing | Agent Registry with qualification gates — not anonymous workers |
+| 3-tier memory | Task-local, shared workspace, and global knowledge — shared context without shared privilege |
+
+Taken together: **Paperclip as control plane + NEMO as execution plane ≈ Kubernetes + Ray for AI agents.**
+
 ---
 
 ## 2. Design Principles
@@ -67,6 +93,10 @@ These principles are non-negotiable and come directly from the three reference p
 | **Agent privilege separation** | Tsao & Cheng — arXiv:2603.13424v1 | Structurally separate unprivileged Reader agents (untrusted data, read-only) from privileged Actor agents (validated JSON only, tool access). This pattern is runtime-agnostic — it applies inside OpenClaw, NemoClaw, or any multi-agent execution layer. |
 | **Separation of Duties (SoD)** | Girard, TrendAI (March 2026) | The agent that generates output must never be the agent that certifies it. Generator ≠ Reviewer. Execution ≠ Evaluation. |
 | **Harness design for long-running tasks** | Anthropic Engineering | Long tasks must be checkpointable, observable, and recoverable. Agents operate via heartbeat loops, not fire-and-forget. |
+| **Task graph over flat lists** | Architecture review | Tasks are nodes in a DAG, not items in a queue. Dependencies are declared explicitly; the scheduler respects ordering before parallelizing. Flat "spawn 100 agents" thinking breaks on interdependent tasks. |
+| **Adaptive planning** | Architecture review | The Planner decides agent count and topology dynamically from task complexity — never a fixed N. Simple tasks get one agent; complex tasks get a graph. Spawning excess agents wastes budget and produces inconsistent outputs. |
+| **Iterative refinement** | Architecture review | The operating loop is Plan → Execute → Evaluate → Refine → Repeat, not Plan → Execute → Done. Evaluation failures feed back into the Planner as re-decomposition signals, not dead ends. |
+| **Shared context, separated privilege** | Architecture review | Agents in the same task graph share structured workspace memory — intermediate results, partial context — but never raw untrusted data. Memory tiers enforce privilege boundaries the same way Reader/Actor roles do. |
 
 ---
 
@@ -80,21 +110,29 @@ flowchart TD
 
     subgraph PLANNER["🧠 Assistant Agent  (Planner)"]
         direction TB
-        BP["Decompose into sub-tasks\nApply best practices:\n· Agent Privilege Separation — Tsao & Cheng\n· Long-running harness — Anthropic\n· SoD-First — Girard, TrendAI"]
-        CHK["Author Job Description per task:\nrequired capabilities · acceptance criteria\nbudget · risk level · security constraints"]
+        BP["Adaptive decomposition:\nbuild task DAG · decide agent count dynamically\nApply best practices:\n· Agent Privilege Separation — Tsao & Cheng\n· Long-running harness — Anthropic\n· SoD-First — Girard, TrendAI"]
+        CHK["Author Job Description per task:\nrequired capabilities · input/output schema\nacceptance criteria · budget · risk level\ndependencies (DAG edges)"]
         BP --> CHK
     end
 
     subgraph COMPANY["📋 NEMO Ticket System  (The Company)"]
         direction TB
-        JD[/"🗒️ Job Description Tickets\nTask-1 · Task-2 · Task-3\n— capabilities required\n— acceptance criteria\n— budget ceiling"/]
-        REG[("🗄️ Agent Registry\nqualified agents · reputation scores\nunit-test results · capability tags")]
+        JD[/"🗒️ Job Description Tickets  (DAG)\nTask-A → Task-B → Task-C\n— capabilities required\n— acceptance criteria\n— budget ceiling\n— dependency edges"/]
+        REG[("🗄️ Agent Registry\nqualified agents · reputation scores\nunit-test results · capability tags\ncost profiles")]
         GATE{"✅ Qualification Gate\nDoes agent meet JD requirements?\nunit tests · reputation · config"}
         COACH["🎓 Company Coach\nContext, guardrails, policies\nduring execution"]
         JD --> GATE
         REG --> GATE
         GATE -->|"qualified"| COACH
         GATE -->|"not qualified"| JD
+    end
+
+    subgraph MEMORY["🧠 Memory Layer"]
+        direction TB
+        ML["🔵 Task-local\n(per agent · cleared on task close)"]
+        MW["🟡 Shared Workspace\n(per task graph · structured JSON only)"]
+        MG[("🟢 Global Knowledge\n(RAG / DB · read-only for agents)")]
+        ML ~~~ MW ~~~ MG
     end
 
     subgraph EXEC["⚙️ Execution Agent  ·  OpenShell / NemoClaw"]
@@ -117,15 +155,18 @@ flowchart TD
     end
 
     H -->|instructs| PLANNER
-    PLANNER -->|"writes JD tickets"| JD
+    PLANNER -->|"writes DAG tickets"| JD
     COACH -->|"coached handoff"| EXEC
     EXEC --> WORKERS
+    EXEC <-->|"read/write structured JSON"| MW
     EXEC -->|"result + provenance tags"| EVAL3
+    MG -->|"read-only context"| EXEC
     EP & ES & EC -->|"verdict · score · feedback"| COMPANY
+    EP & ES & EC -->|"fail → re-plan signal"| PLANNER
     COMPANY -.->|"heartbeat · checkpoint"| EXEC
 ```
 
-> **Reading the diagram:** The Planner decomposes instructions into **Job Description tickets** — each specifying required capabilities, acceptance criteria, and budget. The Ticket System (the company) checks the **Agent Registry** to qualify a candidate before any checkout: agents must pass unit tests, meet reputation thresholds, or satisfy config requirements. A **Company Coach** provides context and guardrails during execution. Inside the Execution Agent, **privilege separation** (Tsao & Cheng) keeps untrusted data in an unprivileged Reader and only structured JSON flows to the privileged Actor. On completion, three **independent evaluations** run: performance, security, and cost — each feeding verdicts back to the ticket system to update agent reputation and task status.
+> **Reading the diagram:** The Planner **adaptively decomposes** instructions into a **DAG of Job Description tickets** — deciding agent count and topology from task complexity, not a fixed N. The Ticket System qualifies agents via the Agent Registry before any checkout. The **Memory Layer** provides three-tier context: task-local state per agent, structured shared workspace across the graph, and read-only global knowledge. Inside the Execution Agent, **privilege separation** keeps untrusted data in the Reader; only structured JSON reaches the Actor. On completion, three **independent evaluations** run. Critically, **evaluation failures feed back to the Planner as re-plan signals** — triggering re-decomposition rather than hard failure. This closes the Plan → Execute → Evaluate → Refine loop.
 
 ---
 
@@ -182,17 +223,103 @@ Human: instruct
 
 ---
 
+### 3.3 Task Graph — DAG Execution Model
+
+Tasks in NEMO are **nodes in a directed acyclic graph**, not items in a flat queue. The Planner declares dependencies explicitly; the scheduler respects ordering before releasing tasks for parallel execution.
+
+**Why this matters:** Many real tasks are interdependent. "Research competitors" must complete before "draft report"; "lint code" and "run tests" can parallelize; "deploy to production" must never run before "security review passes". A flat task list cannot express this — it produces either sequential bottlenecks or dangerous race conditions.
+
+**DAG example:**
+
+```
+Task-A: research (no deps)  ─┐
+Task-B: research (no deps)  ─┼─→ Task-C: synthesize (deps: A, B)
+                              │         │
+                              │         ▼
+                              │   Task-D: draft report (dep: C)
+                              │         │
+                              └─→ Task-E: security review (dep: D)
+                                        │
+                                        ▼
+                                  Task-F: deliver (dep: E, pass only)
+```
+
+**Scheduler rules:**
+
+| Rule | Description |
+|------|-------------|
+| **Dependency gate** | A task may not be checked out until all declared `dependencies` have `verdict = pass` |
+| **Parallel release** | Tasks with satisfied dependencies and no shared output targets are released simultaneously |
+| **Failure propagation** | A task with `verdict = fail` and `max_retries` exhausted marks all downstream dependents `blocked` |
+| **Re-plan trigger** | Planner is notified; it may re-decompose the subgraph rather than let the whole graph fail |
+| **Cycle detection** | The platform rejects any DAG with a cycle at write time (`400 Bad Request`) |
+
+**Adaptive planning rule:** The Planner chooses the graph shape from task complexity. A simple one-step instruction produces one task node. A multi-domain instruction produces a branching graph with parallel leaves and merge points. The Planner must justify agent count in the task's `planning_rationale` field.
+
+---
+
+### 3.4 Memory Layer
+
+NEMO maintains a **three-tier memory model** that gives agents shared context without giving them shared privilege. Each tier has a defined scope, lifetime, and access control.
+
+```
+┌────────────────────────────────────────────────────────────────────┐
+│  Tier 1: Task-local memory                                         │
+│  Scope: one agent, one task checkout                               │
+│  Lifetime: cleared when task closes (pass, fail, or reassign)      │
+│  Access: exclusive to the checked-out agent                        │
+│  Content: scratchpad, intermediate reasoning, tool outputs         │
+└─────────────────────────────┬──────────────────────────────────────┘
+                              │ structured JSON only
+┌─────────────────────────────▼──────────────────────────────────────┐
+│  Tier 2: Shared workspace memory                                   │
+│  Scope: all agents in the same task graph (same `goal_id`)         │
+│  Lifetime: persists until the graph's root task closes             │
+│  Access: read/write for agents in the graph · read-only otherwise  │
+│  Content: validated intermediate outputs from upstream tasks       │
+│  Invariant: only structured JSON written here — never raw strings  │
+└─────────────────────────────┬──────────────────────────────────────┘
+                              │ read-only
+┌─────────────────────────────▼──────────────────────────────────────┐
+│  Tier 3: Global knowledge                                          │
+│  Scope: platform-wide                                              │
+│  Lifetime: persistent (managed externally — RAG, DB, vector store) │
+│  Access: read-only for all agents · mutations require admin gate   │
+│  Content: domain knowledge, policy docs, reference data            │
+└────────────────────────────────────────────────────────────────────┘
+```
+
+**Security invariant:** The privilege boundary between tiers mirrors the Reader/Actor split. An Actor may write to Tier-1 (task-local) and Tier-2 (shared workspace) but only via the structured JSON format validated at checkout. A Reader may never write to any tier. No agent reads raw external content from Tier-2 — it must have already been sanitized by a Reader step before being stored there.
+
+**Why this matters:** Without a shared workspace, agents in the same graph duplicate research, contradict each other, and amplify inconsistencies. Without a global knowledge tier, every agent starts from zero on domain context. Without per-tier access control, shared memory becomes a prompt injection vector.
+
+---
+
 ## 4. Agent Roles and Constraints
 
 ### 4.1 Assistant Agent (Planner)
 
-**Responsibility**: Receive human instructions; decompose into concrete, actionable sub-tasks with explicit acceptance criteria.
+**Responsibility**: Receive human instructions (or re-plan signals from the Evaluation layer); adaptively decompose into a task DAG with explicit acceptance criteria, schema contracts, and dependency edges.
 
 **Constraints**:
-- Must produce structured task objects (title, description, acceptance criteria, estimated agent type, budget ceiling)
-- Must apply the decomposition checklist from §6 before dispatch
+- Must produce a **task DAG**, not a flat list: every task declares its `dependencies` before being written to the platform
+- Must decide agent count dynamically from task complexity — must not use a fixed N; must justify agent count in `planning_rationale`
+- Must produce `input_schema` and `output_schema` for each task (JSON Schema or Zod-compatible)
+- Must apply the decomposition checklist from §5 before dispatch
 - Cannot directly execute tasks — it only writes to the task platform
 - Must tag each task with `@plannedBy <model-id>` and `@plannedAt <timestamp>`
+- On receiving a re-plan signal (evaluation `verdict = fail`): must assess whether to retry the failed node, re-decompose the subgraph, or escalate to human
+
+**Re-plan decision logic:**
+```
+on evaluation_signal(task_id, verdict):
+  if verdict = "fail" and task.retry_count < task.max_retries:
+    → increment retry_count; reset to "pending"; same agent or re-route
+  if verdict = "fail" and retry_count >= max_retries:
+    → re-decompose: replace failed task with a sub-DAG of smaller tasks
+  if re-decomposition produces no viable graph:
+    → escalate to human approval gate
+```
 
 **Known task types**:
 - `summarize` — summarize a document, email thread, or dataset
@@ -334,13 +461,28 @@ if all capabilities satisfied:
 
 Before dispatching any sub-task, the Planner must confirm:
 
+**Correctness**
 - [ ] Task has a single, unambiguous acceptance criterion
 - [ ] Task is assigned to exactly one agent type (`summarize`, `build`, `create-asset`, `research`, `review`)
 - [ ] Task has a budget ceiling in token-cents
 - [ ] Task has a `goal_id` traceable to the company mission
+
+**DAG integrity**
+- [ ] All `dependencies` are listed explicitly (not inferred at runtime)
+- [ ] The dependency graph has no cycles (Planner verifies before write)
+- [ ] Agent count is justified in `planning_rationale` — no fixed N
+- [ ] `max_retries` is set (default: 2; high-risk tasks: 1 with mandatory re-plan)
+
+**Schema contracts**
+- [ ] `input_schema` declares all fields this task will consume from shared workspace or coaching context
+- [ ] `output_schema` declares the required shape of the output artifact
+- [ ] `workspace_keys` and `workspace_writes` are declared (no undeclared shared state)
+
+**Security**
 - [ ] If task touches external data: a Reader sub-step is planned before any Actor step
 - [ ] If task produces a code artifact: an independent Evaluation step is in the plan
 - [ ] No single agent is planned as both executor and evaluator of the same artifact
+- [ ] High-risk tasks (risk_level = high) have a human approval gate in the DAG
 
 ---
 
@@ -500,16 +642,55 @@ The verdict feeds directly into the Agent Registry (§4.5) to update reputation 
 
 ## 9. Heartbeat / Long-Running Task Protocol
 
-Execution agents operate on a heartbeat loop (Paperclip pattern):
+NEMO operates on a **Plan → Execute → Evaluate → Refine** loop, not a one-shot batch. Execution agents use a heartbeat cycle; evaluation failures feed back to the Planner for re-planning.
 
-1. **Checkout** — atomically acquire one pending task
-2. **Acknowledge** — post `in_progress` status with agent identity
-3. **Execute** — run Reader → Actor → Sub-agent chain
-4. **Checkpoint** — write intermediate results; allow recovery on failure
-5. **Complete** — post output artifact with provenance tags
-6. **Yield** — release lock; Evaluation Agent picks up
+### 9.1 Execution Agent Heartbeat
+
+1. **Checkout** — atomically acquire one pending task (dependency gate must be satisfied)
+2. **Acknowledge** — post `in_progress` status with agent identity; load `coaching_context`
+3. **Load context** — pull shared workspace memory (Tier-2) for upstream task outputs relevant to this task's `input_schema`
+4. **Execute** — run Reader → Actor → Sub-agent chain; write intermediate state to Tier-1 (task-local)
+5. **Checkpoint** — write validated intermediate results to Tier-2 (shared workspace); allow recovery on failure
+6. **Complete** — post output artifact with provenance tags; validate against task's `output_schema`
+7. **Yield** — release lock; Evaluation Agent picks up
 
 Budget exhaustion at any step → transition to `blocked`, not `failed`. Human can increase budget and resume.
+
+### 9.2 Iterative Refinement Loop
+
+After evaluation, the loop does not end — it feeds back:
+
+```
+Plan (Planner builds DAG)
+  │
+  ▼
+Execute (Execution Agent — heartbeat above)
+  │
+  ▼
+Evaluate (Performance + Security + Cost — §8)
+  │
+  ├── verdict = pass ──────────────────────► Close task; update Agent Registry
+  │
+  ├── verdict = escalate ──────────────────► Human approval gate; Planner waits
+  │
+  └── verdict = fail
+        │
+        ├── retry_count < max_retries ──────► Re-queue same task; increment retry
+        │
+        └── retry_count >= max_retries ─────► Re-plan signal to Planner
+                                                │
+                                                ▼
+                                        Planner re-decomposes subgraph
+                                        (smaller tasks, different agent, narrower scope)
+                                                │
+                                                ▼
+                                        Loop continues
+```
+
+**Termination conditions:**
+- All tasks in the DAG reach `verdict = pass` → graph closes; root task completes
+- Re-decomposition produces no viable graph → escalate to human
+- Graph-level budget ceiling hit → pause entire graph; human reviews
 
 ---
 
@@ -530,10 +711,27 @@ interface Task {
   budget_cents: number;
   spent_cents: number;
   acceptance_criteria: string;
+
+  // DAG fields
+  dependencies: string[];            // task IDs that must reach verdict=pass before this task is released
+  parent_task_id: string | null;     // for Paperclip-compatible subtask hierarchy
+  planning_rationale: string;        // Planner's justification for this task's scope and agent count
+
+  // Schema contracts (JSON Schema or Zod-compatible)
+  input_schema: object;              // expected shape of inputs consumed (from shared workspace or coaching context)
+  output_schema: object;             // required shape of the output artifact; validated at Complete step
+
+  // Retry and re-plan
+  retry_count: number;               // how many times this task has been re-queued after fail
+  max_retries: number;               // if exceeded, triggers Planner re-decomposition instead of retry
+
+  // Memory
+  workspace_keys: string[];          // keys this task reads from Tier-2 shared workspace
+  workspace_writes: string[];        // keys this task writes to Tier-2 on completion
+
   output_artifact_url: string | null;
   provenance_tags: ProvenanceTags;
   evaluation: EvaluationVerdict | null;
-  parent_task_id: string | null;
   created_at: string;
   updated_at: string;
 }
