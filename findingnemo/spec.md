@@ -102,124 +102,220 @@ These principles are non-negotiable and come directly from the three reference p
 
 ## 3. System Architecture
 
-### 3.1 System Diagram
+### 3.1 Main System Diagram
+
+The diagram below matches the original architecture sketch. Four numbered steps correspond to the four sub-diagrams in §3.2.
 
 ```mermaid
 flowchart TD
-    H(["👤 Human\ninstructs"])
+    H(["👤 Human\nQUESTIONS / Objectives\n\nExample tasks:\n· Task 1: coding\n· Task 2: email summary\n· Task 3: image\n· Task 4: send email\n(not limited to these)"])
 
-    subgraph PLANNER["🧠 Assistant Agent  (Planner)"]
+    subgraph BOUNDARY["System Boundary"]
         direction TB
-        BP["Adaptive decomposition:\nbuild task DAG · decide agent count dynamically\nApply best practices:\n· Agent Privilege Separation — Tsao & Cheng\n· Long-running harness — Anthropic\n· SoD-First — Girard, TrendAI"]
-        CHK["Author Job Description per task:\nrequired capabilities · input/output schema\nacceptance criteria · budget · risk level\ndependencies (DAG edges)"]
-        BP --> CHK
+
+        ORCH["🧠 Assistant / Orchestrator Agent\n\n#2  Breakdown objective into sub-tasks\n     Open Job Desc per sub-task\n     Add constraints  (isolation · SoD)\n     Insert tickets · start tracking"]
+
+        RECRUIT["🔍 Recruit Agent\n\n#3  Hire agents · assign to tasks\n     Finding NEMO / agent"]
+
+        WORKER0["⚙️ Worker-agent-0\n(execution · checked-out task)"]
+
+        TICKETS[("📋 Ticket System\n100+ TASKS\n\n#4  Monitor & Evaluate\n    · faster\n    · evaluator\n    · safer / anti-prompt-inject")]
+
+        ORCH -->|"Job Description tickets (DAG)"| TICKETS
+        ORCH -->|"recruit & assign"| RECRUIT
+        RECRUIT --> WORKER0
+        WORKER0 -->|"result + provenance"| TICKETS
+        TICKETS -.->|"heartbeat · re-plan signal"| ORCH
+        TICKETS -.->|"heartbeat · checkpoint"| WORKER0
     end
 
-    subgraph COMPANY["📋 NEMO Ticket System  (The Company)"]
-        direction TB
-        JD[/"🗒️ Job Description Tickets  (DAG)\nTask-A → Task-B → Task-C\n— capabilities required\n— acceptance criteria\n— budget ceiling\n— dependency edges"/]
-        REG[("🗄️ Agent Registry\nqualified agents · reputation scores\nunit-test results · capability tags\ncost profiles")]
-        GATE{"✅ Qualification Gate\nDoes agent meet JD requirements?\nunit tests · reputation · config"}
-        COACH["🎓 Company Coach\nContext, guardrails, policies\nduring execution"]
-        JD --> GATE
-        REG --> GATE
-        GATE -->|"qualified"| COACH
-        GATE -->|"not qualified"| JD
-    end
-
-    subgraph MEMORY["🧠 Memory Layer"]
-        direction TB
-        ML["🔵 Task-local\n(per agent · cleared on task close)"]
-        MW["🟡 Shared Workspace\n(per task graph · structured JSON only)"]
-        MG[("🟢 Global Knowledge\n(RAG / DB · read-only for agents)")]
-        ML ~~~ MW ~~~ MG
-    end
-
-    subgraph EXEC["⚙️ Execution Agent  ·  OpenShell / NemoClaw"]
+    subgraph POOL["Resource Pool  (External Agents)"]
         direction LR
-        READER["🔍 Reader\n(unprivileged · untrusted data only)"]
-        ACTOR["⚡ Actor\n(privileged · validated JSON only)"]
-        READER -->|"structured JSON"| ACTOR
+        WA["🔴 Worker-agent-A"]
+        WB["🔴 Worker-agent-B"]
     end
 
-    subgraph WORKERS["Specialized Workers"]
-        direction LR
-        AA["Agent-A\n(e.g. summarize)"] ~~~ AB["Agent-B\n(e.g. build/code)"] ~~~ AC["Agent-C\n(e.g. create asset)"]
-    end
-
-    subgraph EVAL3["🏛️ Independent Evaluation  (Post-execution)"]
-        direction LR
-        EP["📊 Performance Eval\noutput quality · task completion\nspeed · accuracy"]
-        ES["🔒 Security Eval\nprivilege adherence · SoD check\nprompt injection · provenance"]
-        EC["💰 Cost Eval\ntoken spend · budget variance\ncost-per-task · ROI"]
-    end
-
-    H -->|instructs| PLANNER
-    PLANNER -->|"writes DAG tickets"| JD
-    COACH -->|"coached handoff"| EXEC
-    EXEC --> WORKERS
-    EXEC <-->|"read/write structured JSON"| MW
-    EXEC -->|"result + provenance tags"| EVAL3
-    MG -->|"read-only context"| EXEC
-    EP & ES & EC -->|"verdict · score · feedback"| COMPANY
-    EP & ES & EC -->|"fail → re-plan signal"| PLANNER
-    COMPANY -.->|"heartbeat · checkpoint"| EXEC
+    H -->|"#1  ask / objectives"| ORCH
+    RECRUIT <-->|"Finding NEMO / agent\nheartbeat · register"| POOL
 ```
 
-> **Reading the diagram:** The Planner **adaptively decomposes** instructions into a **DAG of Job Description tickets** — deciding agent count and topology from task complexity, not a fixed N. The Ticket System qualifies agents via the Agent Registry before any checkout. The **Memory Layer** provides three-tier context: task-local state per agent, structured shared workspace across the graph, and read-only global knowledge. Inside the Execution Agent, **privilege separation** keeps untrusted data in the Reader; only structured JSON reaches the Actor. On completion, three **independent evaluations** run. Critically, **evaluation failures feed back to the Planner as re-plan signals** — triggering re-decomposition rather than hard failure. This closes the Plan → Execute → Evaluate → Refine loop.
+> **Four steps:** **#1** Human states an objective (e.g. "build an app like booking.com") — the system breaks it into 100 tasks. **#2** The Orchestrator writes a Job Description for each sub-task, applies constraints (isolation, SoD), and inserts them as tickets. **#3** The Recruit Agent finds and assigns the right agent from the external resource pool (Finding NEMO). **#4** The Ticket System monitors execution and runs independent evaluation for speed, quality, and security.
 
 ---
 
-### 3.2 Component Detail
+### 3.2 Detail Sub-diagrams
 
+Each sub-diagram zooms into one numbered step from the main diagram.
+
+---
+
+#### Sub-diagram A — #1: From Objective to Tasks
+
+```mermaid
+flowchart LR
+    OBJ(["👤 Objective\ne.g. 'build app like booking.com'"])
+
+    PLAN["🧠 Orchestrator\nAdaptive decomposition\n(decide N dynamically)"]
+
+    subgraph DAG["Task DAG  (100+ tasks)"]
+        direction TB
+        T1["Task-1: coding"]
+        T2["Task-2: email summary"]
+        T3["Task-3: image"]
+        T4["Task-4: send email"]
+        TX["Task-N: …"]
+        T1 ~~~ T2 ~~~ T3 ~~~ T4 ~~~ TX
+    end
+
+    subgraph STRATEGIES["Two valid execution strategies"]
+        direction TB
+        S1["Strategy A\n1 agent × 100 tasks\n100 tasks in 100 sec"]
+        S2["Strategy B\n100 agents × 1 task each\n100 tasks in 1 sec"]
+    end
+
+    OBJ --> PLAN
+    PLAN -->|"builds"| DAG
+    DAG -->|"scheduler chooses"| STRATEGIES
 ```
-Human: instruct
-  │
-  ▼
-┌─────────────────────────────────────────────────┐
-│           ASSISTANT AGENT (Planner)             │
-│  • Breaks task into sub-tasks                   │
-│  • Applies best-practice decomposition rules    │
-│  • Reviews task structure for speed/quality/    │
-│    safety before dispatch                       │
-└──────────────────────┬──────────────────────────┘
-                       │ structured sub-tasks
-                       ▼
-┌─────────────────────────────────────────────────┐
-│     PAPERCLIP-LIKE TASK PLATFORM (Jira layer)   │
-│  • Task-1, Task-2, Task-3, …                    │
-│  • Atomic checkout (one agent per task)         │
-│  • Budget enforcement, audit log                │
-│  • Goal ancestry (every task traces to mission) │
-└───────────┬─────────────────────────────────────┘
-            │ checkout
-            ▼
-┌─────────────────────────────────────────────────┐
-│        EXECUTION AGENT (OpenShell / OpenClaw)   │
-│  ┌──────────────┐   structured JSON             │
-│  │ Reader Agent │ ──────────────────────────►   │
-│  │ (read-only,  │                               │
-│  │ untrusted    │   ◄── raw external content    │
-│  │ data only)   │                               │
-│  └──────────────┘                               │
-│  ┌──────────────┐                               │
-│  │ Actor Agent  │ ◄── validated JSON only       │
-│  │ (privileged, │                               │
-│  │ no raw input)│                               │
-│  └──────────────┘                               │
-│                                                 │
-│  Dispatches to:  Agent-A │ Agent-B │ Agent-C    │
-└───────────┬─────────────────────────────────────┘
-            │ result
-            ▼
-┌─────────────────────────────────────────────────┐
-│           EVALUATION AGENT (Independent)        │
-│  • Different model lineage from Execution agent │
-│  • Read-only access to outputs                  │
-│  • Structured pass/fail/escalate verdict        │
-│  • Posts result back to Paperclip task          │
-└─────────────────────────────────────────────────┘
+
+> The Planner never hard-codes agent count. It decomposes first, then the scheduler parallelizes what the DAG allows (see §3.3). Strategy B is only valid when tasks are truly independent — the DAG encodes which tasks can run in parallel and which must wait.
+
+---
+
+#### Sub-diagram B — #2: Job Description & Ticket Creation
+
+```mermaid
+flowchart TD
+    SUBTASK["Sub-task\n(from decomposition)"]
+
+    subgraph JD["Job Description  (per task)"]
+        direction TB
+        CAP["required_capabilities\ne.g. code-execution · web-search · gpu-inference"]
+        QUAL["qualification_method\nunit_test · reputation_score · config_match"]
+        ACC["acceptance_criteria\nexplicit testable definition of done"]
+        SCHEMA["input_schema / output_schema\nJSON Schema contract for I/O"]
+        SEC["security_constraints\nprivilege level · allowed sources · sanitization rules"]
+        BUDGET["budget_ceiling\nmax token spend in cents"]
+        COACH_CTX["coaching_context\nguidelines · policies · guardrails"]
+        DEPS["dependencies\nDAG edges — which tasks must pass first"]
+    end
+
+    TICKET[("📋 Ticket System\nTask inserted with:\nstatus=pending · goal_id · retry_count=0")]
+
+    SUBTASK --> JD
+    JD -->|"validated · cycle-checked"| TICKET
 ```
+
+> Every ticket is a JD, not just a task description. The platform rejects any ticket whose `dependencies` would create a cycle, or whose `qualification_method` references a capability not declared in the Agent Registry.
+
+---
+
+#### Sub-diagram C — #3: Recruitment — Finding NEMO
+
+```mermaid
+flowchart TD
+    TICKET[("📋 Ticket\nstatus = pending\nrequired_capabilities declared")]
+
+    subgraph REGISTRY["🗄️ Agent Registry  (Resource Pool)"]
+        direction LR
+        WA["🔴 Worker-agent-A\ncapabilities · reputation · cost profile"]
+        WB["🔴 Worker-agent-B\ncapabilities · reputation · cost profile"]
+        WN["🔴 Worker-agent-N\n…"]
+    end
+
+    GATE{"✅ Qualification Gate\nDoes agent meet JD?\nunit tests · reputation ≥ 0.7 · config match"}
+
+    COACH["🎓 Company Coach\ninject coaching_context\nguidelines · security rules"]
+
+    WORKER0["⚙️ Worker-agent-0\nchecked out · in_progress"]
+
+    TICKET -->|"Finding NEMO:\nwhich agent fits?"| GATE
+    REGISTRY -->|"candidate agents"| GATE
+    GATE -->|"qualified → atomic checkout"| COACH
+    GATE -->|"not qualified → stay in queue"| TICKET
+    COACH -->|"coached handoff"| WORKER0
+    WORKER0 -.->|"heartbeat every N sec"| TICKET
+```
+
+> Checkout is atomic — the Paperclip `POST /issues/:id/checkout` returns `409 Conflict` if another agent wins the race. The Recruit Agent never retries a `409`; it finds a different task. External agents register themselves into the pool via heartbeat; the platform knows who is alive and available.
+
+---
+
+#### Sub-diagram D — Execution Internals (Worker-agent-0)
+
+```mermaid
+flowchart TD
+    CHECKOUT["Checked-out task\n+ coaching_context\n+ input_schema"]
+
+    subgraph EXEC["⚙️ Worker-agent-0  ·  OpenShell / NemoClaw"]
+        direction TB
+
+        subgraph PRIVILEGE["Privilege Separation  (Tsao & Cheng)"]
+            direction LR
+            READER["🔍 Reader Agent\n(unprivileged)\nuntrusted external data\nread-only · no tool calls"]
+            ACTOR["⚡ Actor Agent\n(privileged)\nvalidated JSON only\ncan call tools · write outputs"]
+            READER -->|"structured JSON"| ACTOR
+        end
+
+        subgraph WORKERS["Specialized Sub-agents"]
+            direction LR
+            WA2["Agent-A\nsummarize"]
+            WB2["Agent-B\nbuild / code"]
+            WC2["Agent-C\ncreate asset"]
+        end
+
+        PRIVILEGE -->|"Actor dispatches"| WORKERS
+    end
+
+    subgraph MEMORY["Memory Layer"]
+        direction TB
+        ML["🔵 Task-local\n(scratchpad · this agent only)"]
+        MW["🟡 Shared Workspace\n(structured JSON · all agents in graph)"]
+        MG[("🟢 Global Knowledge\n(RAG / DB · read-only)")]
+    end
+
+    CHECKOUT --> READER
+    ACTOR <-->|"read/write JSON"| ML
+    WORKERS -->|"validated output → write"| MW
+    MG -->|"read-only context"| ACTOR
+    WORKERS -->|"result + provenance tags"| OUT["Output artifact\n@executedBy · @executedAt · @taskId"]
+```
+
+> The Actor never sees raw external content — only structured JSON that the Reader has already sanitized. Shared Workspace (Tier-2) is written only after validation; no raw strings enter the cross-agent context. This closes the prompt injection surface at the structural level.
+
+---
+
+#### Sub-diagram E — #4: Evaluation & Re-plan Loop
+
+```mermaid
+flowchart TD
+    RESULT["Output artifact\n+ provenance tags"]
+
+    subgraph EVAL["🏛️ Independent Evaluation  (different model lineage)"]
+        direction LR
+        EP["📊 Performance\nquality · completion\nspeed · accuracy"]
+        ES["🔒 Security\nprivilege adherence · SoD\ninjection · provenance"]
+        EC["💰 Cost\nspend vs budget\ncost-per-task · ROI"]
+    end
+
+    VERDICT{"Aggregate Verdict"}
+
+    PASS["✅ pass\nClose ticket\nUpdate Agent Registry\nreputation +0.05"]
+    ESCALATE["⚠️ escalate\nHuman approval gate\nPlanner waits"]
+    RETRY["🔁 fail · retry\nretry_count < max_retries\nRe-queue same task"]
+    REPLAN["🔄 fail · re-plan\nretry_count ≥ max_retries\nRe-plan signal → Orchestrator\nRe-decompose subgraph"]
+
+    RESULT --> EVAL
+    EP & ES & EC --> VERDICT
+    VERDICT -->|"performance ≥ 0.8\nsecurity = clean\nspend ≤ budget"| PASS
+    VERDICT -->|"confidence < 0.6\nor borderline"| ESCALATE
+    VERDICT -->|"fail + retries left"| RETRY
+    VERDICT -->|"fail + retries exhausted"| REPLAN
+    RETRY -->|"reset to pending"| RESULT
+    REPLAN -->|"new sub-DAG"| RESULT
+```
+
+> Evaluation agents must be from a **different model vendor lineage** than the execution agent (Girard SoD). If generator and reviewer model IDs match, it is a hard block — the task cannot close. Re-plan signals go directly to the Orchestrator which rebuilds the failed subgraph with smaller, narrower tasks.
 
 ---
 
@@ -231,17 +327,27 @@ Tasks in NEMO are **nodes in a directed acyclic graph**, not items in a flat que
 
 **DAG example:**
 
-```
-Task-A: research (no deps)  ─┐
-Task-B: research (no deps)  ─┼─→ Task-C: synthesize (deps: A, B)
-                              │         │
-                              │         ▼
-                              │   Task-D: draft report (dep: C)
-                              │         │
-                              └─→ Task-E: security review (dep: D)
-                                        │
-                                        ▼
-                                  Task-F: deliver (dep: E, pass only)
+```mermaid
+flowchart LR
+    A["Task-A\nresearch\n(no deps)"]
+    B["Task-B\nresearch\n(no deps)"]
+    C["Task-C\nsynthesize\ndeps: A · B"]
+    D["Task-D\ndraft report\ndep: C"]
+    E["Task-E\nsecurity review\ndep: D"]
+    F["Task-F\ndeliver\ndep: E · pass only"]
+
+    A --> C
+    B --> C
+    C --> D
+    D --> E
+    E -->|"verdict = pass"| F
+
+    style A fill:#d4e6f1
+    style B fill:#d4e6f1
+    style C fill:#d5f5e3
+    style D fill:#fdebd0
+    style E fill:#f9ebea
+    style F fill:#d7bde2
 ```
 
 **Scheduler rules:**
