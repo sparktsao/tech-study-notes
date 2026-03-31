@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>TrendAI VisionPlatform — Cybersecurity AI · Finding NEMO</title>
+<title>TrendAI VisionOne for Claw Workers: FINDING NEMO (claw) — Cybersecurity AI</title>
 <style>
 /* ─── Reset & Variables ───────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -504,6 +504,26 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
 .framework-select { width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:7px 10px; color:var(--text0); font-family:var(--font); font-size:12px; outline:none; transition:border-color .15s; }
 .framework-select:focus { border-color:var(--red); }
 .threat-strip-badge { display:inline-block; padding:2px 7px; border-radius:4px; background:rgba(232,41,58,.18); color:#e8293a; border:1px solid rgba(232,41,58,.4); font-size:10px; font-weight:700; width:100%; text-align:center; margin-top:5px; }
+
+/* ─── Global KPI Banner ───────────────────────────────────────────── */
+#global-kpi-bar {
+  display:flex; align-items:stretch; background:var(--bg0);
+  border-bottom:1px solid var(--border); flex-shrink:0; overflow:hidden;
+}
+.gkpi-cell {
+  flex:1; padding:8px 18px; border-right:1px solid var(--border-subtle);
+  display:flex; flex-direction:column; gap:2px; min-width:0;
+}
+.gkpi-cell:last-child { border-right:none; }
+.gkpi-label { font-size:9px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; color:var(--text3); white-space:nowrap; }
+.gkpi-val { font-size:20px; font-weight:800; line-height:1.1; color:var(--text0); }
+.gkpi-sub { font-size:9px; color:var(--text3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.gkpi-val.gv-orange { color:var(--orange); }
+.gkpi-val.gv-blue   { color:var(--cyan); }
+.gkpi-val.gv-green  { color:var(--green); }
+.gkpi-val.gv-red    { color:var(--red); }
+.gkpi-val.gv-purple { color:var(--purple); }
+.gkpi-val.gv-teal   { color:var(--teal); }
 </style>
 </head>
 <body>
@@ -512,10 +532,10 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
   <!-- Top Bar -->
   <div id="topbar">
     <div class="brand">
-      <div class="nemo-logo" style="background:linear-gradient(135deg,#e8293a,#b01e2c);">TV</div>
+      <img src="trendai_security_logo.jpeg" alt="TrendAI" style="width:38px;height:38px;border-radius:7px;object-fit:cover;flex-shrink:0;">
       <div>
-        <div class="brand-name">TrendAI VisionPlatform</div>
-        <div class="brand-sub">Cybersecurity AI · Finding NEMO Orchestration · Airgap-Ready</div>
+        <div class="brand-name">TrendAI VisionOne for Claw Workers</div>
+        <div class="brand-sub">FINDING NEMO (claw) · Cybersecurity AI · Airgap-Ready</div>
       </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap;">
@@ -523,6 +543,40 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
       <span style="font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.3);font-weight:600;">Airgap: ON</span>
       <span class="threat-badge threat-critical pulse">⚠ APT-29: ACTIVE</span>
       <button class="btn" style="background:#b01e2c;border-color:#e8293a;color:#fff;" onclick="runScheduler()">▶ Run NEMO Scan</button>
+    </div>
+  </div>
+
+  <!-- Global KPI Banner — last 7 days -->
+  <div id="global-kpi-bar">
+    <div class="gkpi-cell">
+      <span class="gkpi-label">Customers Waiting</span>
+      <span class="gkpi-val gv-orange" id="gkpi-waiting">7</span>
+      <span class="gkpi-sub">awaiting assessment start</span>
+    </div>
+    <div class="gkpi-cell">
+      <span class="gkpi-label">Projects Running</span>
+      <span class="gkpi-val gv-blue" id="gkpi-projects">2</span>
+      <span class="gkpi-sub">active threat hunts</span>
+    </div>
+    <div class="gkpi-cell">
+      <span class="gkpi-label">AgentClaws Working</span>
+      <span class="gkpi-val gv-green" id="gkpi-working">4</span>
+      <span class="gkpi-sub">on-prem · airgapped</span>
+    </div>
+    <div class="gkpi-cell">
+      <span class="gkpi-label">Claws Waiting</span>
+      <span class="gkpi-val" id="gkpi-idle">1</span>
+      <span class="gkpi-sub">ready to dispatch</span>
+    </div>
+    <div class="gkpi-cell">
+      <span class="gkpi-label">Value Earned · 7d</span>
+      <span class="gkpi-val gv-teal" id="gkpi-revenue">$142.8K</span>
+      <span class="gkpi-sub">↑ 18% vs prior week</span>
+    </div>
+    <div class="gkpi-cell">
+      <span class="gkpi-label">Tokens Consumed · 7d</span>
+      <span class="gkpi-val gv-purple" id="gkpi-tokens">2.4M</span>
+      <span class="gkpi-sub">all on-prem · $0 OpenAI</span>
     </div>
   </div>
 
