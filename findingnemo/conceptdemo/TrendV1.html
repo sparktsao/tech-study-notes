@@ -1,0 +1,1723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrendAI VisionPlatform — Cybersecurity AI · Finding NEMO</title>
+<style>
+/* ─── Reset & Variables ───────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg0: #060c18;
+  --bg1: #0c1525;
+  --bg2: #111d33;
+  --bg3: #182540;
+  --border: #1e3052;
+  --border-subtle: #152238;
+  --text0: #e8edf5;
+  --text1: #b8c5d8;
+  --text2: #7a91b0;
+  --text3: #4a6080;
+  --red:   #e8293a;
+  --red2:  #b01e2c;
+  --cyan:  #00d4ff;
+  --teal:  #00b8a9;
+  --green: #22c55e;
+  --orange:#f59e0b;
+  --purple:#a78bfa;
+  --blue:  #00d4ff;
+  --blue2: #e8293a;
+  --accent: #e8293a;
+  --accent2: #00d4ff;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+html, body { height: 100%; font-family: var(--font); background: var(--bg0); color: var(--text0); font-size: 13px; line-height: 1.5; }
+
+/* ─── Layout ──────────────────────────────────────────────────────── */
+#app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+#topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 16px; height: 48px; background: var(--bg1);
+  border-bottom: 1px solid var(--border); flex-shrink: 0; z-index: 10;
+}
+#topbar .brand { display: flex; align-items: center; gap: 10px; }
+#topbar .brand-name { font-size: 15px; font-weight: 700; letter-spacing: .5px; color: var(--text0); }
+#topbar .brand-sub { font-size: 11px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; }
+.nemo-logo { width: 28px; height: 28px; background: linear-gradient(135deg,#b01e2c,#e8293a); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; color: #fff; }
+
+#body { display: flex; flex: 1; overflow: hidden; }
+
+/* ─── Sidebar ─────────────────────────────────────────────────────── */
+#sidebar {
+  width: 220px; flex-shrink: 0; background: var(--bg1);
+  border-right: 1px solid var(--border); display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-section { padding: 12px 12px 4px; display: flex; align-items: center; justify-content: space-between; }
+.sidebar-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .7px; }
+.sidebar-action { font-size: 11px; color: var(--blue); cursor: pointer; }
+.sidebar-action:hover { text-decoration: underline; }
+.project-list { overflow-y: auto; flex: 1; padding-bottom: 12px; }
+.project-item {
+  padding: 6px 12px; cursor: pointer; border-radius: 0;
+  display: flex; flex-direction: column; gap: 2px;
+  border-left: 2px solid transparent; transition: background .12s;
+}
+.project-item:hover { background: var(--bg2); }
+.project-item.active { background: var(--bg2); border-left-color: var(--blue); }
+.project-item .pname { font-size: 12px; color: var(--text0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.project-item .pmeta { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text2); }
+.dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.dot-green  { background: var(--green); }
+.dot-blue   { background: var(--blue); }
+.dot-gray   { background: var(--text3); }
+.dot-red    { background: var(--red); }
+.dot-orange { background: var(--orange); }
+
+/* ─── Org Sidebar Items ───────────────────────────────────────────── */
+.org-item { border-bottom: 1px solid var(--border-subtle); }
+.org-header { display: flex; align-items: flex-start; gap: 6px; padding: 8px 12px; cursor: pointer; transition: background .12s; }
+.org-header:hover { background: var(--bg2); }
+.org-toggle { font-size: 8px; color: var(--text2); flex-shrink: 0; margin-top: 3px; }
+.org-info { flex: 1; min-width: 0; }
+.org-name { font-size: 12px; font-weight: 600; color: var(--text0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.org-meta { font-size: 10px; color: var(--text2); margin-top: 1px; }
+.org-projects { display: none; background: var(--bg0); }
+.org-projects.expanded { display: block; }
+.org-proj-item { display: flex; align-items: flex-start; gap: 6px; padding: 4px 12px 4px 24px; cursor: pointer; border-left: 2px solid transparent; transition: background .1s; }
+.org-proj-item:hover { background: var(--bg2); }
+.org-proj-item.active { background: var(--bg2); border-left-color: var(--blue); }
+.org-proj-name { font-size: 11px; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
+.org-proj-item.active .org-proj-name { color: var(--blue); }
+.org-item.active-org > .org-header { background: rgba(56,139,253,.07); border-left: 2px solid var(--blue); }
+.org-item.active-org .org-name { color: var(--blue); }
+.org-filter-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.org-filter-bar .ofb-title { font-size:14px; font-weight:600; color:var(--text0); }
+.org-filter-bar .ofb-clear { font-size:11px; color:var(--blue); cursor:pointer; }
+.org-filter-bar .ofb-clear:hover { text-decoration:underline; }
+
+/* ─── Main + Detail ───────────────────────────────────────────────── */
+#main { flex: 1; overflow: hidden; display: flex; flex-direction: row; }
+#content { flex: 1; overflow-y: auto; padding: 0; display: flex; flex-direction: column; }
+#detail-panel {
+  width: 340px; flex-shrink: 0; border-left: 1px solid var(--border);
+  background: var(--bg1); overflow-y: auto; display: flex; flex-direction: column;
+}
+
+/* ─── Project Header ──────────────────────────────────────────────── */
+#proj-header {
+  padding: 20px 24px 16px; border-bottom: 1px solid var(--border); background: var(--bg1);
+}
+.proj-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+.proj-title { font-size: 20px; font-weight: 700; color: var(--text0); display: flex; align-items: center; gap: 8px; }
+.proj-desc { font-size: 12px; color: var(--text2); max-width: 680px; line-height: 1.6; }
+.proj-btns { display: flex; gap: 6px; flex-shrink: 0; }
+.btn { padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg2); color: var(--text0); transition: background .12s; }
+.btn:hover { background: var(--bg3); }
+.btn-primary { background: var(--blue2); border-color: var(--blue2); color: #fff; }
+.btn-primary:hover { background: #1a7de0; }
+.btn-green { background: #196c2e; border-color: var(--green); color: var(--green); }
+.btn-green:hover { background: #1e8038; }
+
+/* ─── Stats Row ───────────────────────────────────────────────────── */
+.stats-row {
+  display: grid; grid-template-columns: repeat(4,1fr);
+  border-bottom: 1px solid var(--border); background: var(--bg1);
+}
+.stat-cell { padding: 14px 24px; border-right: 1px solid var(--border-subtle); }
+.stat-cell:last-child { border-right: none; }
+.stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .7px; color: var(--text2); margin-bottom: 4px; }
+.stat-val { font-size: 26px; font-weight: 700; color: var(--text0); }
+.stat-val.s-green  { color: var(--green); }
+.stat-val.s-blue   { color: var(--blue); }
+.stat-val.s-orange { color: var(--orange); }
+.stat-val.s-red    { color: var(--red); }
+
+/* ─── Panel sections ──────────────────────────────────────────────── */
+.panel-section { padding: 16px 24px; border-bottom: 1px solid var(--border); }
+.panel-section-hdr {
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase;
+  letter-spacing: .7px; margin-bottom: 12px;
+}
+.panel-section-hdr .badge { font-size: 10px; background: var(--bg3); border: 1px solid var(--border);
+  padding: 1px 6px; border-radius: 10px; color: var(--text2); text-transform: none; letter-spacing: 0; }
+
+/* ─── WBS / DAG Panel ─────────────────────────────────────────────── */
+#wbs-panel { padding: 16px 24px; background: var(--bg0); border-bottom: 1px solid var(--border); }
+.wbs-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.wbs-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .7px; color: var(--text2); }
+.legend { display: flex; gap: 12px; align-items: center; }
+.legend-item { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text2); }
+.legend-box { width: 10px; height: 10px; border-radius: 2px; }
+
+#dag-svg-wrap {
+  background: var(--bg1); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px; overflow-x: auto; position: relative;
+}
+#dag-svg { display: block; margin: 0 auto; }
+
+/* node styles applied via JS */
+.dag-node { cursor: pointer; transition: filter .15s; }
+.dag-node:hover { filter: brightness(1.2); }
+.dag-node.selected rect { stroke-width: 2.5 !important; }
+
+/* ─── Tooltip ─────────────────────────────────────────────────────── */
+#tooltip {
+  position: fixed; z-index: 9999; pointer-events: none;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 14px; width: 280px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5); display: none; font-size: 12px;
+}
+#tooltip .tt-title { font-weight: 600; color: var(--text0); margin-bottom: 6px; line-height: 1.4; }
+#tooltip .tt-desc  { color: var(--text2); margin-bottom: 8px; line-height: 1.5; font-size: 11px; }
+#tooltip .tt-row   { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+#tooltip .tt-key   { color: var(--text2); font-size: 11px; }
+#tooltip .tt-val   { color: var(--text0); font-size: 11px; font-weight: 500; }
+#tooltip .tt-bar-wrap { background: var(--bg3); border-radius: 3px; height: 4px; flex: 1; margin: 0 8px; overflow: hidden; }
+#tooltip .tt-bar   { height: 100%; border-radius: 3px; transition: width .3s; }
+#tooltip .tt-caps  { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+#tooltip .tt-cap-label { color: var(--text2); font-size: 10px; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+#tooltip .tt-tags  { display: flex; flex-wrap: wrap; gap: 4px; }
+#tooltip .tt-tag   { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 1px 6px; font-size: 10px; color: var(--text2); font-family: var(--font-mono); }
+#tooltip .tt-sod   { margin-top: 8px; padding: 6px 8px; background: rgba(210,153,34,.1);
+  border: 1px solid rgba(210,153,34,.3); border-radius: 5px; color: var(--orange); font-size: 11px; }
+#tooltip .tt-badge { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 600; margin-bottom: 6px; }
+
+/* ─── Task List ───────────────────────────────────────────────────── */
+#tasks-panel { padding: 0 24px 16px; background: var(--bg0); }
+.task-table { width: 100%; border-collapse: collapse; }
+.task-table th {
+  text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .7px; color: var(--text2); padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.task-table td { padding: 10px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: top; }
+.task-row { cursor: pointer; transition: background .1s; }
+.task-row:hover { background: var(--bg1); }
+.task-row.selected { background: rgba(56,139,253,.08); }
+.task-name { font-weight: 500; color: var(--text0); font-size: 12px; margin-bottom: 3px; }
+.task-subdesc { font-size: 11px; color: var(--text2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 340px; }
+.status-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; white-space: nowrap;
+}
+.s-completed { background: rgba(63,185,80,.15); color: var(--green); border: 1px solid rgba(63,185,80,.3); }
+.s-running   { background: rgba(88,166,255,.15); color: var(--blue);  border: 1px solid rgba(88,166,255,.3); }
+.s-queued    { background: rgba(139,148,158,.15); color: var(--text2); border: 1px solid var(--border); }
+.s-blocked   { background: rgba(210,153,34,.12);  color: var(--orange);border: 1px solid rgba(210,153,34,.3); }
+.s-failed    { background: rgba(248,81,73,.15);   color: var(--red);   border: 1px solid rgba(248,81,73,.3); }
+.time-est { font-family: var(--font-mono); font-size: 11px; color: var(--text2); white-space: nowrap; }
+.mini-prog-wrap { background: var(--bg3); border-radius: 3px; height: 3px; width: 60px; overflow: hidden; margin-top: 4px; }
+.mini-prog { height: 100%; border-radius: 3px; }
+
+/* ─── Detail Panel ────────────────────────────────────────────────── */
+.detail-hdr {
+  padding: 16px 16px 12px; border-bottom: 1px solid var(--border);
+  background: var(--bg1); position: sticky; top: 0; z-index: 5;
+}
+.detail-title { font-size: 13px; font-weight: 600; color: var(--text0); line-height: 1.4; margin-bottom: 8px; }
+.detail-desc  { font-size: 12px; color: var(--text2); line-height: 1.6; }
+.detail-btns  { display: flex; gap: 6px; margin-top: 10px; }
+.detail-btn { padding: 4px 10px; border-radius: 5px; font-size: 11px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg2); color: var(--text0); }
+.detail-btn:hover { background: var(--bg3); }
+.detail-btn.primary { background: var(--blue2); border-color: var(--blue2); color: #fff; }
+.detail-btn.green   { background: rgba(63,185,80,.15); border-color: var(--green); color: var(--green); }
+
+.detail-body { padding: 12px 16px; }
+.detail-row { margin-bottom: 14px; }
+.detail-row-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px;
+  color: var(--text2); margin-bottom: 5px; }
+.detail-row-val { font-size: 12px; color: var(--text1); line-height: 1.5; }
+.criteria-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.criteria-list li { display: flex; align-items: flex-start; gap: 6px; font-size: 11px; color: var(--text2); line-height: 1.4; }
+.crit-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); flex-shrink: 0; margin-top: 5px; }
+.caps-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.cap-tag { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px;
+  padding: 2px 7px; font-size: 10px; color: var(--text2); font-family: var(--font-mono); }
+
+.metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.metric-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
+.metric-card .mk { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+.metric-card .mv { font-size: 16px; font-weight: 700; color: var(--text0); }
+.metric-card .mb { background: var(--bg3); border-radius: 3px; height: 3px; margin-top: 5px; overflow: hidden; }
+.metric-card .mf { height: 100%; border-radius: 3px; }
+
+.dep-list { display: flex; flex-wrap: wrap; gap: 5px; }
+.dep-tag { display: flex; align-items: center; gap: 4px; background: var(--bg2);
+  border: 1px solid var(--border); border-radius: 4px; padding: 2px 8px; font-size: 11px; color: var(--text1); }
+.dep-check { color: var(--green); font-size: 10px; }
+.dep-pend  { color: var(--orange); font-size: 10px; }
+
+.sod-badge { display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+  background: rgba(210,153,34,.08); border: 1px solid rgba(210,153,34,.3);
+  border-radius: 5px; font-size: 11px; color: var(--orange); margin-top: 6px; }
+
+.timing-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); }
+.timing-val { color: var(--text0); font-family: var(--font-mono); }
+
+.empty-panel { padding: 40px 16px; text-align: center; color: var(--text2); font-size: 12px; }
+.empty-panel .ep-icon { font-size: 32px; margin-bottom: 8px; opacity: .4; }
+
+/* ─── Events ──────────────────────────────────────────────────────── */
+#events-panel { padding: 16px 24px; background: var(--bg0); }
+.event-item { display: flex; align-items: flex-start; gap: 10px;
+  padding: 6px 0; border-bottom: 1px solid var(--border-subtle); font-size: 11px; }
+.event-item:last-child { border-bottom: none; }
+.event-time { color: var(--text3); white-space: nowrap; font-family: var(--font-mono); }
+.event-msg  { color: var(--text2); }
+.event-msg strong { color: var(--text1); }
+
+/* ─── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ─── Pulse animation for running tasks ───────────────────────────── */
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+.pulse { animation: pulse 2s ease-in-out infinite; }
+
+/* ─── New project form ────────────────────────────────────────────── */
+.new-proj-form { padding: 16px 24px; background: var(--bg1); border-top: 1px solid var(--border); }
+.form-row { margin-bottom: 10px; }
+.form-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .6px; color: var(--text2); margin-bottom: 4px; }
+.form-input, .form-textarea {
+  width: 100%; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 6px; padding: 7px 10px; color: var(--text0); font-family: var(--font);
+  font-size: 12px; outline: none; transition: border-color .15s;
+}
+.form-input:focus, .form-textarea:focus { border-color: var(--blue); }
+.form-textarea { resize: vertical; min-height: 60px; }
+
+/* ─── Tab Navigation ──────────────────────────────────────────────── */
+#tab-nav {
+  display: flex; align-items: center; gap: 0;
+  background: var(--bg1); border-bottom: 1px solid var(--border);
+  padding: 0 16px; flex-shrink: 0;
+}
+.tab-btn {
+  padding: 10px 18px; font-size: 12px; font-weight: 500; cursor: pointer;
+  border: none; background: none; color: var(--text2);
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: color .15s, border-color .15s; white-space: nowrap;
+}
+.tab-btn:hover { color: var(--text0); }
+.tab-btn.active { color: var(--text0); border-bottom-color: var(--blue); }
+.tab-btn .tab-num {
+  display: inline-block; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 4px; font-size: 9px; font-weight: 700; color: var(--text2);
+  padding: 0 4px; margin-right: 5px; letter-spacing: 0;
+}
+.tab-btn.active .tab-num { background: rgba(56,139,253,.15); border-color: var(--blue); color: var(--blue); }
+
+/* ─── Tab Panes ───────────────────────────────────────────────────── */
+.tab-pane { display: none; position: absolute; inset: 0; overflow: hidden; }
+.tab-pane.active { display: flex; }
+#tab-dag { flex-direction: row; }
+#tab-dag-inner { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+#tab-projects { flex-direction: column; overflow-y: auto; padding: 20px 24px; background: var(--bg0); }
+#tab-recruit  { flex-direction: column; overflow-y: auto; background: var(--bg0); }
+#tab-eval     { flex-direction: column; overflow-y: auto; background: var(--bg0); }
+
+/* ─── Projects Tab ────────────────────────────────────────────────── */
+.projects-summary {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px;
+}
+.summary-card {
+  background: var(--bg1); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 16px;
+}
+.summary-card .sc-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .7px; color: var(--text2); margin-bottom: 4px; }
+.summary-card .sc-val { font-size: 28px; font-weight: 700; }
+.proj-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-bottom: 24px; }
+.proj-card {
+  background: var(--bg1); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 16px; cursor: pointer; transition: border-color .15s, background .15s;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.proj-card:hover { border-color: var(--blue); background: var(--bg2); }
+.proj-card.active-card { border-color: var(--blue); background: rgba(56,139,253,.06); }
+.proj-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.proj-card-name { font-size: 13px; font-weight: 600; color: var(--text0); line-height: 1.4; }
+.proj-card-meta { display: flex; gap: 10px; font-size: 11px; color: var(--text2); }
+.proj-card-meta span { display: flex; align-items: center; gap: 3px; }
+.proj-card-prog { background: var(--bg3); border-radius: 3px; height: 3px; overflow: hidden; }
+.proj-card-progfill { height: 100%; border-radius: 3px; }
+.proj-card-footer { display: flex; align-items: center; justify-content: space-between; }
+.proj-type-badge { font-size: 10px; background: var(--bg3); border: 1px solid var(--border);
+  padding: 1px 6px; border-radius: 4px; color: var(--text2); font-family: var(--font-mono); }
+
+/* ─── New Project Section ─────────────────────────────────────────── */
+.new-proj-section {
+  background: var(--bg1); border: 1px solid var(--border); border-radius: 8px;
+  padding: 16px 20px; margin-top: 4px;
+}
+.new-proj-section h3 { font-size: 12px; font-weight: 600; color: var(--text0); margin-bottom: 12px; }
+
+/* ─── Recruit Tab ─────────────────────────────────────────────────── */
+.recruit-body { display: flex; gap: 0; flex: 1; min-height: 0; }
+.recruit-col { flex: 1; border-right: 1px solid var(--border); overflow-y: auto; }
+.recruit-col:last-child { border-right: none; }
+.recruit-col-hdr {
+  padding: 12px 16px; background: var(--bg1);
+  border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 3;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.recruit-col-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .7px; color: var(--text2); }
+.recruit-count { font-size: 10px; background: var(--bg3); border: 1px solid var(--border);
+  padding: 1px 7px; border-radius: 10px; color: var(--text2); }
+
+/* JD card */
+.jd-card {
+  margin: 8px 12px; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 10px 12px; cursor: pointer; transition: border-color .15s;
+}
+.jd-card:hover { border-color: var(--blue); }
+.jd-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.jd-card-title { font-size: 12px; font-weight: 600; color: var(--text0); }
+.jd-task-ref { font-size: 10px; font-family: var(--font-mono); color: var(--text2); }
+.jd-caps { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
+.jd-cap { font-size: 10px; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: 3px; padding: 1px 5px; color: var(--text2); font-family: var(--font-mono); }
+.jd-sod { margin-top: 6px; font-size: 10px; color: var(--orange);
+  padding: 3px 6px; background: rgba(210,153,34,.08); border: 1px solid rgba(210,153,34,.25); border-radius: 4px; }
+.jd-match { margin-top: 6px; font-size: 11px; color: var(--green); display: flex; align-items: center; gap: 4px; }
+.jd-no-match { margin-top: 6px; font-size: 11px; color: var(--text3); }
+
+/* Agent card */
+.agent-card {
+  margin: 8px 12px; background: var(--bg2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 10px 12px;
+}
+.agent-card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.agent-name { font-size: 12px; font-weight: 600; color: var(--text0); display: flex; align-items: center; gap: 6px; }
+.agent-type { font-size: 10px; color: var(--text2); }
+.agent-model { font-size: 10px; font-family: var(--font-mono); color: var(--blue); }
+.hb-indicator { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text2); }
+.hb-dot { width: 7px; height: 7px; border-radius: 50%; }
+.hb-active { background: var(--green); }
+.hb-offline { background: var(--text3); }
+.agent-task { font-size: 11px; color: var(--text2); margin-top: 4px; }
+.agent-task strong { color: var(--blue); }
+.agent-caps { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
+.agent-border-external { border-left: 3px solid var(--red); }
+.agent-border-internal { border-left: 3px solid var(--green); }
+
+/* Heartbeat log */
+.hb-log { padding: 12px 16px; }
+.hb-entry { display: flex; align-items: flex-start; gap: 8px; padding: 4px 0;
+  border-bottom: 1px solid var(--border-subtle); font-size: 11px; }
+.hb-entry:last-child { border-bottom: none; }
+.hb-ts { color: var(--text3); font-family: var(--font-mono); white-space: nowrap; }
+.hb-msg { color: var(--text2); }
+.hb-msg b { color: var(--text1); }
+
+/* ─── Evaluate Tab ────────────────────────────────────────────────── */
+.eval-body { padding: 20px 24px; }
+.kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 20px; }
+.kpi-card {
+  background: var(--bg1); border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;
+}
+.kpi-card .kpi-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .7px; color: var(--text2); }
+.kpi-card .kpi-val { font-size: 30px; font-weight: 700; }
+.kpi-card .kpi-sub { font-size: 11px; color: var(--text2); }
+
+.eval-section { background: var(--bg1); border: 1px solid var(--border); border-radius: 8px; margin-bottom: 14px; overflow: hidden; }
+.eval-section-hdr { padding: 10px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; }
+.eval-section-hdr .esh-title { font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .7px; color: var(--text2); }
+.eval-section-body { padding: 14px 16px; }
+
+/* Bar chart */
+.bar-chart { display: flex; flex-direction: column; gap: 10px; }
+.bar-row { display: flex; align-items: center; gap: 10px; }
+.bar-label { font-size: 11px; color: var(--text2); width: 220px; flex-shrink: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.bar-track { flex: 1; background: var(--bg3); border-radius: 3px; height: 14px;
+  position: relative; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; position: absolute; top: 0; left: 0; }
+.bar-fill-budget { opacity: .25; }
+.bar-fill-spent { z-index: 1; }
+.bar-val { font-size: 11px; color: var(--text2); font-family: var(--font-mono); width: 80px; text-align: right; }
+
+/* Eval table */
+.eval-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.eval-table th { text-align: left; font-size: 10px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: .7px; color: var(--text2); padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.eval-table td { padding: 8px 10px; border-bottom: 1px solid var(--border-subtle); vertical-align: middle; }
+.eval-table tr:last-child td { border-bottom: none; }
+.verdict-pass    { color: var(--green); font-weight: 600; }
+.verdict-running { color: var(--blue); }
+.verdict-pending { color: var(--text3); }
+.verdict-fail    { color: var(--red); font-weight: 600; }
+.verdict-escalate{ color: var(--orange); font-weight: 600; }
+
+/* Throughput */
+.throughput-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.tp-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 6px;
+  padding: 12px 14px; text-align: center; }
+.tp-card .tp-label { font-size: 10px; color: var(--text2); text-transform: uppercase;
+  letter-spacing: .6px; margin-bottom: 6px; }
+.tp-card .tp-val { font-size: 24px; font-weight: 700; color: var(--text0); }
+.tp-card .tp-desc { font-size: 11px; color: var(--text2); margin-top: 4px; }
+.tp-win { color: var(--green); }
+
+/* Security events */
+.sec-event { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0;
+  border-bottom: 1px solid var(--border-subtle); font-size: 11px; }
+.sec-event:last-child { border-bottom: none; }
+.sec-level { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px;
+  font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+.sec-info  { background: rgba(88,166,255,.15); color: var(--blue); }
+.sec-warn  { background: rgba(210,153,34,.15); color: var(--orange); }
+.sec-pass  { background: rgba(63,185,80,.15); color: var(--green); }
+.sec-msg { color: var(--text2); }
+.sec-msg b { color: var(--text1); }
+
+/* ─── TrendAI VisionPlatform Additions ───────────────────────────────── */
+.airgap-tag { display:inline-block; padding:1px 6px; border-radius:3px; font-size:9px; font-weight:700; background:rgba(0,184,169,.12); color:#00b8a9; border:1px solid rgba(0,184,169,.3); font-family:var(--font-mono); letter-spacing:.3px; }
+.threat-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; }
+.threat-critical { background:rgba(232,41,58,.2); color:#e8293a; border:1px solid rgba(232,41,58,.4); }
+.threat-high { background:rgba(245,158,11,.15); color:#f59e0b; border:1px solid rgba(245,158,11,.3); }
+.threat-medium { background:rgba(0,212,255,.12); color:#00d4ff; border:1px solid rgba(0,212,255,.25); }
+.threat-clear { background:rgba(34,197,94,.12); color:#22c55e; border:1px solid rgba(34,197,94,.3); }
+.pan-badge { display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:4px; font-size:10px; font-weight:600; background:rgba(0,212,255,.1); color:#00d4ff; border:1px solid rgba(0,212,255,.3); }
+.sec-strip { padding:0 16px; height:30px; background:rgba(232,41,58,.06); border-bottom:1px solid rgba(232,41,58,.2); display:flex; align-items:center; gap:14px; font-size:10px; color:var(--text2); flex-shrink:0; overflow:hidden; white-space:nowrap; }
+.sec-strip .ss-key { color:var(--text3); }
+.sec-strip .ss-val-red { color:#e8293a; font-weight:600; }
+.sec-strip .ss-val-cyan { color:#00d4ff; font-weight:600; }
+.sec-strip .ss-val-green { color:#22c55e; font-weight:600; }
+.sec-strip .ss-val-orange { color:#f59e0b; font-weight:600; }
+.sec-strip .ss-sep { color:var(--border); }
+.posture-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px; }
+.posture-card { background:var(--bg1); border:1px solid var(--border); border-radius:8px; padding:12px 16px; }
+.posture-card .pc-label { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.7px; color:var(--text2); margin-bottom:4px; }
+.posture-card .pc-val { font-size:22px; font-weight:700; }
+.framework-select { width:100%; background:var(--bg2); border:1px solid var(--border); border-radius:6px; padding:7px 10px; color:var(--text0); font-family:var(--font); font-size:12px; outline:none; transition:border-color .15s; }
+.framework-select:focus { border-color:var(--red); }
+.threat-strip-badge { display:inline-block; padding:2px 7px; border-radius:4px; background:rgba(232,41,58,.18); color:#e8293a; border:1px solid rgba(232,41,58,.4); font-size:10px; font-weight:700; width:100%; text-align:center; margin-top:5px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Top Bar -->
+  <div id="topbar">
+    <div class="brand">
+      <div class="nemo-logo" style="background:linear-gradient(135deg,#e8293a,#b01e2c);">TV</div>
+      <div>
+        <div class="brand-name">TrendAI VisionPlatform</div>
+        <div class="brand-sub">Cybersecurity AI · Finding NEMO Orchestration · Airgap-Ready</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:nowrap;">
+      <span class="pan-badge"><span style="width:5px;height:5px;border-radius:50%;background:#22c55e;display:inline-block;"></span>PAN-OS: Connected</span>
+      <span style="font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.3);font-weight:600;">Airgap: ON</span>
+      <span class="threat-badge threat-critical pulse">⚠ APT-29: ACTIVE</span>
+      <button class="btn" style="background:#b01e2c;border-color:#e8293a;color:#fff;" onclick="runScheduler()">▶ Run NEMO Scan</button>
+    </div>
+  </div>
+
+  <div class="sec-strip">
+    <span><span class="ss-key">PAN-OS Enclave:</span> <span class="ss-val-cyan">Boeing-SEC-01</span></span>
+    <span class="ss-sep">·</span>
+    <span><span class="ss-key">Threat Level:</span> <span class="ss-val-red">HIGH — APT-29 Cozy Bear</span></span>
+    <span class="ss-sep">·</span>
+    <span><span class="ss-key">On-prem LLMs:</span> <span class="ss-val-cyan">4 claws active (ollama/vllm)</span></span>
+    <span class="ss-sep">·</span>
+    <span><span class="ss-key">OpenAI API:</span> <span class="ss-val-green">NOT USED — Airgapped</span></span>
+    <span class="ss-sep">·</span>
+    <span><span class="ss-key">Last Scan:</span> <span class="ss-val-orange">14:37:22</span></span>
+    <span class="ss-sep">·</span>
+    <span><span class="ss-key">IOC Hits:</span> <span class="ss-val-red">23 P2 confirmed</span></span>
+  </div>
+  <div id="body">
+    <!-- Sidebar -->
+    <div id="sidebar">
+      <div class="sidebar-section" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+          <span class="sidebar-label">Enterprises</span>
+          <span class="sidebar-action" onclick="alert('New security assessment request')">+ New Assessment</span>
+        </div>
+        <span class="threat-strip-badge">⚠ APT-29 ACTIVE</span>
+      </div>
+      <div class="project-list" id="project-list"></div>
+    </div>
+
+    <!-- Main + Tabs -->
+    <div id="main">
+      <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;">
+
+        <!-- Project Header (shared across tabs 2-4) -->
+        <div id="proj-header" style="flex-shrink:0;">
+          <div class="proj-title-row">
+            <div class="proj-title">
+              <span class="dot dot-blue pulse" id="proj-status-dot"></span>
+              <span id="proj-title-text">APT-29 Threat Hunt &amp; Network Penetration Analysis</span>
+            </div>
+            <div class="proj-btns">
+<button class="btn" style="background:#b01e2c;border-color:#e8293a;color:#fff;">Threat Plan</button>
+<button class="btn">Refresh IOCs</button>
+<button class="btn">NIST Brief</button>
+            </div>
+          </div>
+          <div class="proj-desc" id="proj-desc">
+            Build a simple static bakery landing page with hero, three featured products, about, hours, location, and contact. Self-contained — no external assets.
+          </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div id="tab-nav">
+          <button class="tab-btn" data-tab="projects" onclick="switchTab('projects')"><span class="tab-num">#1</span>Projects</button>
+          <button class="tab-btn active" data-tab="dag" onclick="switchTab('dag')"><span class="tab-num">#2</span>Task DAG</button>
+          <button class="tab-btn" data-tab="recruit" onclick="switchTab('recruit')"><span class="tab-num">#3</span>Recruit</button>
+          <button class="tab-btn" data-tab="eval" onclick="switchTab('eval')"><span class="tab-num">#4</span>Evaluate</button>
+        </div>
+
+        <!-- Tab content wrapper -->
+        <div style="flex:1;overflow:hidden;display:flex;position:relative;">
+
+          <!-- ── TAB #1: PROJECTS ───────────────────────────────────── -->
+          <div class="tab-pane" id="tab-projects">
+            <!-- Security Posture -->
+            <div class="posture-row">
+              <div class="posture-card"><div class="pc-label">Threat Level</div><div class="pc-val" style="color:#e8293a">HIGH</div></div>
+              <div class="posture-card"><div class="pc-label">Open Incidents</div><div class="pc-val" style="color:#f59e0b">3</div></div>
+              <div class="posture-card"><div class="pc-label">Compliant Orgs</div><div class="pc-val" style="color:#22c55e">3<span style="font-size:14px;font-weight:400;color:var(--text2)">/5</span></div></div>
+              <div class="posture-card"><div class="pc-label">PAN Rules Updated</div><div class="pc-val" style="color:#00d4ff">2<span style="font-size:14px;font-weight:400;color:var(--text2)"> today</span></div></div>
+            </div>
+            <!-- summary stats -->
+            <div class="projects-summary">
+              <div class="summary-card">
+                <div class="sc-label" id="ps-total-label">Total Assessments</div>
+                <div class="sc-val" style="color:var(--text0)" id="ps-total">11</div>
+              </div>
+              <div class="summary-card">
+                <div class="sc-label">Running</div>
+                <div class="sc-val" style="color:var(--blue)" id="ps-running">2</div>
+              </div>
+              <div class="summary-card">
+                <div class="sc-label">Completed</div>
+                <div class="sc-val" style="color:var(--green)" id="ps-completed">3</div>
+              </div>
+              <div class="summary-card">
+                <div class="sc-label">Pending / Draft</div>
+                <div class="sc-val" style="color:var(--red)" id="ps-other">6</div>
+              </div>
+            </div>
+            <!-- org filter bar (shown when an org is selected) -->
+            <div class="org-filter-bar" id="proj-filter-bar" style="display:none;">
+              <span class="ofb-title" id="proj-filter-title"></span>
+              <span class="ofb-clear" onclick="selectOrg(null)">✕ All orgs</span>
+            </div>
+            <!-- project cards -->
+            <div class="proj-grid" id="proj-cards"></div>
+            <!-- new customer request form -->
+            <div class="new-proj-section">
+              <h3>Submit Security Assessment Request</h3>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Each request forms a security project. The Orchestrator decomposes it into a task DAG, assigns NemoClaws running on-prem models (no external API), and enforces agent isolation, SoD (model family separation), and Palo Alto integration where applicable.</div>
+              <div class="form-row"><div class="form-label">Assessment Title</div><input class="form-input" placeholder="e.g. APT-29 threat hunt, HIPAA compliance scan, LiteLLM audit…"></div>
+              <div class="form-row"><div class="form-label">Compliance Framework</div><select class="framework-select"><option>NIST CSF</option><option>PCI-DSS v4.0</option><option>HIPAA</option><option>CMMC Level 2</option><option>SOC 2 Type II</option><option>ISO 27001</option></select></div>
+              <div class="form-row"><div class="form-label">Assessment Scope &amp; Acceptance Criteria</div><textarea class="form-textarea" placeholder="Threat scope, IOC sources, compliance requirements, network segments, airgap constraints…"></textarea></div>
+              <div style="display:flex;gap:8px;align-items:center;">
+                <button class="btn btn-primary" style="background:#b01e2c;border-color:#e8293a;">Submit &amp; Threat-Plan</button>
+<span style="font-size:11px;color:var(--text2);">Orchestrator decomposes into a threat-hunt DAG. All NemoClaws use on-prem models — no external API calls.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── TAB #2: TASK DAG ──────────────────────────────────── -->
+          <div class="tab-pane active" id="tab-dag">
+            <div id="tab-dag-inner">
+              <!-- Stats -->
+              <div class="stats-row">
+                <div class="stat-cell"><div class="stat-label">Intel Complete</div><div class="stat-val s-green" id="stat-accepted">1</div></div>
+                <div class="stat-cell"><div class="stat-label">Scans Active</div><div class="stat-val s-blue" id="stat-running">2</div></div>
+                <div class="stat-cell"><div class="stat-label">Pending SoD/Deps</div><div class="stat-val s-orange" id="stat-queued">2</div></div>
+                <div class="stat-cell"><div class="stat-label">Escalated</div><div class="stat-val s-red" id="stat-rework">0</div></div>
+              </div>
+              <!-- Planner Summary -->
+              <div style="padding:10px 24px 8px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;">
+                <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);margin-bottom:4px;">Planner Summary — Orchestrator</div>
+                <div style="font-size:12px;color:var(--text2);">APT-29 threat hunt decomposed into 5-task DAG (2 parallel scan tracks). Task-2 (PAN-OS firewall correlation) and Task-3 (LiteLLM CVE-2024-5522 audit) run concurrently — ThreatClaw-B (Llama-3.3-70b) and ThreatClaw-C (Llama-3.1-405b). <span style="color:#e8293a;font-weight:600;">SoD enforced:</span> Task-4 independent reviewer must be <span style="color:#00b8a9;">Mistral lineage</span> (≠ Llama builders). Final NIST brief (Task-5) gates on SoD review. <span style="color:#00d4ff;">All claws airgapped — Boeing SEC-01 enclave — no OpenAI API.</span></div>
+              </div>
+              <!-- WBS / DAG Panel -->
+              <div id="wbs-panel">
+                <div class="wbs-hdr">
+                  <div class="wbs-title">Work Breakdown Structure — Task DAG</div>
+                  <div class="legend">
+                    <div class="legend-item"><div class="legend-box" style="background:var(--green)"></div>Completed</div>
+                    <div class="legend-item"><div class="legend-box" style="background:var(--blue)"></div>Running</div>
+                    <div class="legend-item"><div class="legend-box" style="background:var(--text3)"></div>Queued</div>
+                    <div class="legend-item"><div class="legend-box" style="background:var(--orange)"></div>Blocked</div>
+                    <div class="legend-item" style="gap:4px;"><div style="width:18px;height:2px;border-top:2px dashed var(--orange);"></div><span>SoD</span></div>
+                  </div>
+                </div>
+                <div id="dag-svg-wrap"><svg id="dag-svg" width="780" height="210"></svg></div>
+              </div>
+              <!-- Task List -->
+              <div id="tasks-panel" style="padding-top:12px;">
+                <div class="panel-section-hdr" style="padding:0 0 8px 0;border-bottom:1px solid var(--border);margin-bottom:0;">
+                  <span>Tasks</span><span class="badge">5</span>
+                </div>
+                <table class="task-table" id="task-table">
+                  <thead><tr>
+                    <th>Task</th><th>Status</th><th>Agent</th><th>Progress</th><th style="text-align:right">Est.</th>
+                  </tr></thead>
+                  <tbody id="task-tbody"></tbody>
+                </table>
+              </div>
+              <!-- Events -->
+              <div id="events-panel">
+                <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);margin-bottom:8px;">System Events</div>
+                <div id="events-list"></div>
+              </div>
+            </div><!-- /#tab-dag-inner -->
+            <!-- Detail Panel (DAG tab only) -->
+            <div id="detail-panel">
+              <div id="detail-content">
+                <div class="empty-panel">
+                  <div class="ep-icon">🛡️</div>
+                  <div>Select a task to view threat details</div>
+                  <div style="margin-top:4px;font-size:11px;color:var(--text3);">or hover over the DAG to preview</div>
+                </div>
+              </div>
+            </div>
+          </div><!-- /#tab-dag -->
+
+          <!-- ── TAB #3: RECRUIT ───────────────────────────────────── -->
+          <div class="tab-pane" id="tab-recruit">
+            <!-- top info bar -->
+            <div style="padding:10px 16px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
+                <div>
+                  <div style="font-size:12px;font-weight:600;color:var(--text0);margin-bottom:4px;">ThreatClaw Dispatch Board — Airgapped Enclave</div>
+                  <div style="font-size:11px;color:var(--text2);line-height:1.6;max-width:680px;">
+ThreatClaw agents run <b style="color:#00d4ff">exclusively on-prem</b> using <b style="color:#00b8a9">ollama / vllm backends</b> — zero external API calls, fully airgapped in the Boeing-SEC-01 secure enclave. All credentials are <b style="color:#f59e0b">vault-injected with 4h rotation</b> (no long-lived secrets in claw memory). NEMO enforces <b style="color:#22c55e">agent isolation</b> (dedicated network namespace per claw), <b style="color:#e8293a">SoD</b> (Mistral ≠ Llama model family separation for Task-4), and atomic ticket checkout to prevent double-execution. ThreatClaw-D (Mistral-7b) is the designated SoD reviewer — explicitly different lineage from all Llama-based builders.
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;font-size:11px;">
+                  <span style="color:var(--green);display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;"></span>2 active</span>
+                  <span style="color:var(--blue);display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--blue);display:inline-block;"></span>2 ready</span>
+                  <span style="color:var(--text3);display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--text3);display:inline-block;"></span>1 offline</span>
+                </div>
+              </div>
+            </div>
+            <div class="recruit-body">
+              <!-- Open Tickets (JDs) -->
+              <div class="recruit-col">
+                <div class="recruit-col-hdr">
+                  <span class="recruit-col-title">Open Tickets (ThreatClaw JDs)</span>
+                  <span class="recruit-count" id="jd-count">2 open</span>
+                </div>
+                <div id="jd-list"></div>
+              </div>
+              <!-- NemoClaw Registry -->
+              <div class="recruit-col">
+                <div class="recruit-col-hdr">
+                  <span class="recruit-col-title">ThreatClaw Registry — On-Prem / Airgapped</span>
+                  <span class="recruit-count">5 claws</span>
+                </div>
+                <div id="agent-list"></div>
+              </div>
+              <!-- Dispatch Log -->
+              <div class="recruit-col" style="max-width:320px;">
+                <div class="recruit-col-hdr">
+                  <span class="recruit-col-title">NEMO Dispatch Log</span>
+                  <span class="recruit-count pulse" style="color:var(--green)">live</span>
+                </div>
+                <div class="hb-log" id="hb-log"></div>
+              </div>
+            </div>
+          </div><!-- /#tab-recruit -->
+
+          <!-- ── TAB #4: EVALUATE ──────────────────────────────────── -->
+          <div class="tab-pane" id="tab-eval">
+            <div class="eval-body">
+              <!-- KPI row -->
+              <div class="kpi-row">
+                <div class="kpi-card">
+                  <div class="kpi-label">Tasks Done / Total</div>
+                  <div class="kpi-val" style="color:var(--green)">1<span style="font-size:16px;font-weight:400;color:var(--text2)">/5</span></div>
+                  <div class="kpi-sub">20% — 2 scans running · APT-29 hunt active</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-label">Threat Score</div>
+                  <div class="kpi-val" style="color:#e8293a">8.4<span style="font-size:16px;font-weight:400;color:var(--text2)">/10</span></div>
+                  <div class="kpi-sub">HIGH — 23 IOC hits confirmed · escalation likely</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-label">Compute Cost (on-prem tokens)</div>
+                  <div class="kpi-val" style="color:#00d4ff">2,180<span style="font-size:16px;font-weight:400;color:var(--text2)">/4,900</span></div>
+                  <div class="kpi-sub">44% of budget · all on-prem · $0 OpenAI</div>
+                </div>
+                <div class="kpi-card">
+                  <div class="kpi-label">Security Alerts</div>
+                  <div class="kpi-val" style="color:#e8293a">3</div>
+                  <div class="kpi-sub">P2 IOC hits · LiteLLM CVE detected</div>
+                </div>
+              </div>
+
+              <!-- Cost chart -->
+              <div class="eval-section">
+                <div class="eval-section-hdr">
+                  <span class="esh-title">Cost per Task — Budget vs Spent (tokens)</span>
+                  <span style="font-size:10px;color:var(--text2);">Budget shown faded · Spent shown solid</span>
+                </div>
+                <div class="eval-section-body">
+                  <div class="bar-chart" id="cost-chart"></div>
+                </div>
+              </div>
+
+              <!-- Evaluation table -->
+              <div class="eval-section">
+                <div class="eval-section-hdr">
+                  <span class="esh-title">Evaluator Verdicts</span>
+                  <span style="font-size:10px;color:var(--text2);">pass · running · pending · fail · escalate</span>
+                </div>
+                <div class="eval-section-body" style="padding:0;">
+                  <table class="eval-table">
+                    <thead><tr>
+                      <th>#</th><th>Task</th><th>Verdict</th><th>Quality</th><th>Cost</th><th>Time</th><th>Retries</th>
+                    </tr></thead>
+                    <tbody id="eval-tbody"></tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Throughput comparison -->
+              <div class="eval-section">
+                <div class="eval-section-hdr">
+                  <span class="esh-title">Throughput — Parallel vs Sequential (On-Prem Claws)</span>
+                </div>
+                <div class="eval-section-body">
+                  <div class="throughput-compare">
+                    <div class="tp-card">
+                      <div class="tp-label">Strategy A — 1 Sequential ThreatClaw</div>
+                      <div class="tp-val">4,500s</div>
+                      <div class="tp-desc">Sequential · 5 tasks avg 900s each · ~75 min</div>
+                    </div>
+                    <div class="tp-card">
+                      <div class="tp-label">Strategy B — NEMO Parallel DAG</div>
+                      <div class="tp-val tp-win">~2,100s</div>
+                      <div class="tp-desc tp-win">Parallel scans · 53% faster · <b>NEMO routes</b></div>
+                    </div>
+                  </div>
+                  <div style="margin-top:12px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.6;">
+Current run: <b style="color:var(--text0)">2 parallel scan tracks</b> (Task-2 PAN-OS via ThreatClaw-B + Task-3 LiteLLM via ThreatClaw-C), reducing wall time by ~53% vs sequential (2,100s vs 4,500s est). SoD gate adds ~450 token overhead for Task-4 (ThreatClaw-D Mistral lineage — required by Boeing IR policy). <b style="color:#00b8a9">Zero data leaves Boeing airgapped enclave</b> — all compute on ollama/vllm on-prem cluster. No OpenAI API keys used.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Security / anti-prompt-inject log -->
+              <div class="eval-section">
+                <div class="eval-section-hdr">
+                  <span class="esh-title">Security, Anti-Prompt-Inject &amp; Agent Isolation Log</span>
+                  <span style="font-size:10px;padding:1px 7px;border-radius:10px;background:rgba(63,185,80,.15);color:var(--green);border:1px solid rgba(63,185,80,.3);">All Clear</span>
+                </div>
+                <div class="eval-section-body">
+                  <div id="sec-log"></div>
+                </div>
+              </div>
+
+            </div>
+          </div><!-- /#tab-eval -->
+
+        </div><!-- tab content wrapper -->
+      </div><!-- flex column -->
+    </div><!-- /#main -->
+  </div><!-- /#body -->
+</div><!-- /#app -->
+
+<!-- Tooltip -->
+<div id="tooltip"></div>
+
+<script>
+// ─── Data ─────────────────────────────────────────────────────────────
+const PROJECTS = [
+  { id:'p1',  name:'APT-29 Threat Hunt & Network Penetration Analysis', status:'running',   active:true  },
+  { id:'p2',  name:'Zero-Trust Policy Rollout Assessment',              status:'running',   active:false },
+  { id:'p3',  name:'CMMC Level 2 Compliance Audit',                     status:'completed', active:false },
+  { id:'p4',  name:'Endpoint Vulnerability Assessment Q2',              status:'completed', active:false },
+  { id:'p5',  name:'LiteLLM AI Pipeline Security Audit',                status:'planning',  active:false },
+  { id:'p6',  name:'Palo Alto Firewall Rule Optimization',              status:'running',   active:false },
+  { id:'p7',  name:'SD-WAN Threat Surface Review',                      status:'draft',     active:false },
+  { id:'p8',  name:'HIPAA PHI Exposure Scan',                           status:'completed', active:false },
+  { id:'p9',  name:'Medical IoT Device Security Assessment',            status:'draft',     active:false },
+  { id:'p10', name:'PCI-DSS v4.0 Compliance Sweep',                    status:'running',   active:false },
+  { id:'p11', name:'AI Transaction Fraud Model Audit',                  status:'planning',  active:false },
+];
+
+const TASKS = [
+  {
+    id:'task1', seq:1,
+    title:'Collect APT-29 IOC Feed & TTP Mapping (MITRE ATT&CK)',
+    description:'Ingest latest APT-29 IOC feeds (domains, IPs, file hashes) from CISA AA22-264A and MITRE ATT&CK T1566.001 (spearphishing), T1078 (valid accounts), T1021 (remote services). Map to Boeing network segments and produce risk matrix.',
+    type:'intel', status:'completed',
+    dependencies:[],
+    agent:'ThreatClaw-A', agentType:'Employee Claw / Threat Intel Analyst (Boeing)', agentCount:1,
+    budget_cents:800, spent_cents:781, progress:100,
+    quality:0.97, risk:'high', riskColor:'#f59e0b',
+    acceptance_criteria:[
+      'IOC list compiled: 47 IPs, 12 domains, 8 file hashes from CISA AA22-264A',
+      'TTPs mapped to MITRE ATT&CK sub-techniques (T1566.001, T1078, T1021)',
+      'Boeing network segment risk matrix produced',
+      'Output schema compatible with PAN-OS firewall API ingestion'
+    ],
+    capabilities:['threat-intel','mitre-attack','ioc-extraction','ttp-mapping'],
+    retry_count:0, max_retries:2,
+    estimated_s:800, sod:false,
+    events:[
+      { t:'14:20:03', msg:'ThreatClaw-A self-scheduled task1 (employee claw · Marcus L., Boeing Threat Intel)' },
+      { t:'14:22:10', msg:'IOC feed ingested: 47 IPs, 12 domains, 8 hashes — CISA AA22-264A verified' },
+      { t:'14:28:41', msg:'Evaluation: PASS (quality 0.97) — 2 downstream scan tasks released' },
+    ]
+  },
+  {
+    id:'task2', seq:2,
+    title:'Cross-Reference PAN Firewall Logs (Palo Alto API Integration)',
+    description:'Query Palo Alto PAN-OS REST API to retrieve last 72h of traffic logs. Correlate against APT-29 IOC list from Task-1. Flag lateral movement patterns: T1021.002 SMBExec, T1550.002 Pass-the-Hash. Document firewall rule gaps.',
+    type:'scan', status:'running',
+    dependencies:['task1'],
+    agent:'ThreatClaw-B', agentType:'Employee Claw / PAN-OS Integration (Cisco SecOps)', agentCount:1,
+    budget_cents:1400, spent_cents:870, progress:62,
+    quality:null, risk:'critical', riskColor:'#e8293a',
+    acceptance_criteria:[
+      'PAN-OS API queried: 72h log window ingested (TLS 1.3 verified)',
+      'IOC hits flagged with severity P1/P2/P3 classification',
+      'Lateral movement patterns identified and timestamped',
+      'Firewall rule gaps documented for remediation in Task-5'
+    ],
+    capabilities:['pan-os-api','log-analysis','firewall-rule-audit','ioc-correlation'],
+    retry_count:0, max_retries:2,
+    estimated_s:1400, sod:false,
+    events:[
+      { t:'14:28:41', msg:'ThreatClaw-B assigned to task2 by Orchestrator (PAN-OS credentials vault-injected)' },
+      { t:'14:31:08', msg:'PAN-OS API session active — 72h log window retrieved (1.2M events)' },
+      { t:'14:37:15', msg:'Heartbeat — 62% · 23 IOC hits flagged P2 · encoded payload in User-Agent' },
+    ]
+  },
+  {
+    id:'task3', seq:3,
+    title:'Audit LiteLLM Proxy for CVE-2024-5522 Prompt Injection',
+    description:"Assess Boeing's on-prem LiteLLM proxy for CVE-2024-5522 (prompt injection via system prompt override). Test model routing bypass, cost limit bypass, and unauthorized model switching. All tests in isolated on-prem sandbox — zero external API calls.",
+    type:'scan', status:'running',
+    dependencies:['task1'],
+    agent:'ThreatClaw-C', agentType:'Service Claw / LiteLLM Security Auditor (on-prem)', agentCount:1,
+    budget_cents:1100, spent_cents:529, progress:48,
+    quality:null, risk:'high', riskColor:'#f59e0b',
+    acceptance_criteria:[
+      'CVE-2024-5522 injection vectors tested (7/7 attack vectors)',
+      'Model routing bypass: confirmed vulnerable or mitigated',
+      'API key leak surface assessed (memory, logs, network)',
+      'Remediation recommendations drafted for LiteLLM config hardening'
+    ],
+    capabilities:['litellm-audit','prompt-injection-detection','api-security','cve-scanning'],
+    retry_count:0, max_retries:2,
+    estimated_s:1100, sod:true, sodNote:'Task-4 reviewer must use Mistral lineage (≠ Llama used by ThreatClaw-C)',
+    events:[
+      { t:'14:28:44', msg:'ThreatClaw-C self-scheduled task3 (SoD: Llama lineage — task4 must use Mistral)' },
+      { t:'14:33:17', msg:'LiteLLM prompt injection test 3/7 — system prompt override: VULNERABLE' },
+      { t:'14:37:22', msg:'Heartbeat — 48% · 3/7 vectors tested · sandbox I/O clean' },
+    ]
+  },
+  {
+    id:'task4', seq:4,
+    title:'Independent SoD Threat Assessment — Mistral Lineage Review',
+    description:'Independently re-evaluate findings from Task-2 and Task-3 using a different NemoClaw model lineage (Mistral-7b). Validate severity ratings, confirm no false negatives, and produce escalation recommendations aligned with Boeing IR playbook and CISA guidance.',
+    type:'review', status:'blocked',
+    dependencies:['task2','task3'],
+    agent:'ThreatClaw-D', agentType:'Service Claw / SoD Threat Reviewer (Mistral — different lineage)', agentCount:1,
+    budget_cents:900, spent_cents:0, progress:0,
+    quality:null, risk:'medium', riskColor:'#00d4ff',
+    acceptance_criteria:[
+      'Severity ratings independently verified (Mistral-7b model — different from Llama-3.3-70b builders)',
+      'No false negatives in IOC correlation from Task-2',
+      'SoD model lineage check logged: Mistral-7b ≠ Llama-3.3-70b (satisfied)',
+      'Escalation decision: contain / notify CISA / patch timeline documented'
+    ],
+    capabilities:['threat-assessment','sod-enforcement','independent-review','escalation-triage'],
+    retry_count:0, max_retries:1,
+    estimated_s:900, sod:true, sodNote:'Must use Mistral family — ThreatClaw-D confirmed different lineage from Task-2/3 Llama builders',
+    events:[
+      { t:'14:37:22', msg:'task4 queued — ThreatClaw-D (Mistral-7b) ready once task2 + task3 complete' },
+    ]
+  },
+  {
+    id:'task5', seq:5,
+    title:'Generate NIST CSF Incident Response Brief + PAN-OS Remediation Roadmap',
+    description:'Synthesize all findings into a NIST CSF (Identify, Protect, Detect, Respond, Recover) structured brief. Include Boeing-specific remediation roadmap, PAN-OS firewall rule push recommendations, LiteLLM hardening steps, and a 30-60-90 day patching schedule.',
+    type:'report', status:'blocked',
+    dependencies:['task4'],
+    agent:'ThreatClaw-E', agentType:'Service Claw / NIST CSF Report Writer (on-prem)', agentCount:1,
+    budget_cents:700, spent_cents:0, progress:0,
+    quality:null, risk:'low', riskColor:'#22c55e',
+    acceptance_criteria:[
+      'NIST CSF 5-function report produced (Identify/Protect/Detect/Respond/Recover)',
+      'PAN-OS rule recommendations formatted for direct import (XML policy pack)',
+      'LiteLLM CVE-2024-5522 hardening steps documented',
+      'Executive summary (2 pages) suitable for Boeing CISO — CMMC Level 2 gap mapping'
+    ],
+    capabilities:['report-generation','nist-csf','remediation-planning','executive-brief'],
+    retry_count:0, max_retries:2,
+    estimated_s:700, sod:false,
+    events:[
+      { t:'14:37:22', msg:'task5 queued — ThreatClaw-E ready once task4 (SoD review) completes' },
+    ]
+  }
+];
+
+
+const EVENTS = [
+  { t:'14:37:22', msg:'<strong>task3</strong> heartbeat — 48% · 3/7 LiteLLM CVE-2024-5522 vectors tested · ThreatClaw-C airgapped' },
+  { t:'14:37:15', msg:'<strong>task2</strong> heartbeat — 62% · 23 IOC hits P2 · encoded payload in User-Agent flagged' },
+  { t:'14:33:17', msg:'<strong>task3</strong> LiteLLM prompt injection vector 3/7 confirmed VULNERABLE — system prompt override' },
+  { t:'14:31:08', msg:'<strong>task2</strong> PAN-OS API session active — 1.2M log events retrieved (72h window)' },
+  { t:'14:28:44', msg:'<strong>task3</strong> self-scheduled by ThreatClaw-C (SoD: Llama lineage, task4 must be Mistral)' },
+  { t:'14:28:41', msg:'<strong>task2</strong> assigned to ThreatClaw-B (PAN-OS credentials vault-injected, 4h TTL)' },
+  { t:'14:22:10', msg:'<strong>task1</strong> evaluation PASS (quality 0.97) — APT-29 IOCs confirmed, 2 scan tasks released' },
+  { t:'14:20:03', msg:'Planner decomposed APT-29 threat hunt into 5-task DAG (2 parallel scan tracks)' },
+  { t:'14:19:44', msg:'VisionPlatform — PAN-OS handshake confirmed (TLS 1.3, cert pinned, Boeing-SEC-01 enclave)' },
+];
+
+// ─── DAG Layout ────────────────────────────────────────────────────────
+// SVG: 780 × 210
+// task1: col0 → task2: col1 top, task3: col1 bot → task4: col2 bot → task5: col3 center
+const DAG_NODES = {
+  task1: { x:80,  y:105, w:130, h:44 },
+  task2: { x:270, y:50,  w:150, h:44 },
+  task3: { x:270, y:116, w:150, h:44 },
+  task4: { x:470, y:116, w:140, h:44 },
+  task5: { x:660, y:83,  w:100, h:44 },
+};
+const DAG_EDGES = [
+  { from:'task1', to:'task2', sod:false },
+  { from:'task1', to:'task3', sod:false },
+  { from:'task2', to:'task5', sod:false },
+  { from:'task3', to:'task4', sod:true  },
+  { from:'task4', to:'task5', sod:false },
+];
+
+// ─── Status helpers ────────────────────────────────────────────────────
+const STATUS_META = {
+  completed: { label:'Completed', color:'#22c55e', cls:'s-completed', dot:'dot-green'  },
+  running:   { label:'Running',   color:'#00d4ff', cls:'s-running',   dot:'dot-blue'   },
+  blocked:   { label:'Blocked',   color:'#f59e0b', cls:'s-blocked',   dot:'dot-orange' },
+  queued:    { label:'Queued',    color:'#7a91b0', cls:'s-queued',    dot:'dot-gray'   },
+  failed:    { label:'Failed',    color:'#e8293a', cls:'s-failed',    dot:'dot-red'    },
+  planning:  { label:'Planning',  color:'#00d4ff', cls:'s-running',   dot:'dot-blue'   },
+  draft:     { label:'Draft',     color:'#7a91b0', cls:'s-queued',    dot:'dot-gray'   },
+  completed_proj: { label:'Done', color:'#22c55e', cls:'s-completed', dot:'dot-green'  },
+};
+
+function statusMeta(s) { return STATUS_META[s] || STATUS_META.queued; }
+
+// ─── Organizations ─────────────────────────────────────────────────────
+const ORGANIZATIONS = [
+  { id:'org1', name:'Boeing Defense & Space',       industry:'Aerospace/Defense',   projects:['p1','p2','p3']  },
+  { id:'org2', name:'Dell Technologies',            industry:'Enterprise IT',        projects:['p4','p5']       },
+  { id:'org3', name:'Cisco Systems',                industry:'Network Security',     projects:['p6','p7']       },
+  { id:'org4', name:'California State Hospital',    industry:'Healthcare/Gov',       projects:['p8','p9']       },
+  { id:'org5', name:'American Express Banking',     industry:'Financial Services',   projects:['p10','p11']     },
+];
+let activeOrgId = null; // null = all orgs
+
+// ─── Build Sidebar ─────────────────────────────────────────────────────
+function buildSidebar() {
+  const el = document.getElementById('project-list');
+  el.innerHTML = ORGANIZATIONS.map(org => {
+    const orgProjects = PROJECTS.filter(p => org.projects.includes(p.id));
+    const runningCount = orgProjects.filter(p => p.status === 'running').length;
+    const metaExtra = runningCount > 0 ? ` · <span style="color:var(--blue)">${runningCount} running</span>` : '';
+    const isActive = activeOrgId === org.id;
+
+    const projItems = orgProjects.map(p => {
+      const m = statusMeta(p.status);
+      return `<div class="org-proj-item ${p.active?'active':''}" data-id="${p.id}" onclick="event.stopPropagation();selectProject('${p.id}')">
+        <div class="dot ${m.dot}" style="width:5px;height:5px;flex-shrink:0;margin-top:5px;"></div>
+        <span class="org-proj-name">${p.name}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="org-item ${isActive?'active-org':''}">
+      <div class="org-header" onclick="selectOrg('${org.id}')">
+        <div class="org-info">
+          <div class="org-name">${org.name}</div>
+          <div class="org-meta">${orgProjects.length} request${orgProjects.length!==1?'s':''} · ${org.industry}${metaExtra}</div>
+        </div>
+      </div>
+      <div class="org-projects expanded">${projItems}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── Org Filter ────────────────────────────────────────────────────────
+function selectOrg(orgId) {
+  activeOrgId = (activeOrgId === orgId) ? null : orgId; // toggle off if same
+  buildSidebar();
+  buildProjectCards();
+}
+
+// ─── Build Task Table ──────────────────────────────────────────────────
+function buildTaskTable() {
+  const tbody = document.getElementById('task-tbody');
+  tbody.innerHTML = TASKS.map(t => {
+    const m = statusMeta(t.status);
+    const progColor = t.status==='completed'?'#22c55e': t.status==='running'?'#00d4ff':'#4a6080';
+    return `<tr class="task-row" id="tr-${t.id}" onclick="selectTask('${t.id}')">
+      <td>
+        <div class="task-name">${t.title}</div>
+        <div class="task-subdesc">${t.description.slice(0,80)}…</div>
+        ${t.sod?`<div style="font-size:10px;color:var(--orange);margin-top:3px;">⚡ SoD constraint</div>`:''}
+      </td>
+      <td><span class="status-badge ${m.cls}"><span class="dot ${m.dot}" style="width:5px;height:5px;"></span>${m.label}</span></td>
+      <td style="font-size:11px;color:var(--text2);white-space:nowrap;">${t.agent}</td>
+      <td>
+        <div style="font-size:11px;color:var(--text2);">${t.progress}%</div>
+        <div class="mini-prog-wrap"><div class="mini-prog" style="width:${t.progress}%;background:${progColor}"></div></div>
+      </td>
+      <td style="text-align:right"><div class="time-est">${t.estimated_s}s est</div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Build Events ──────────────────────────────────────────────────────
+function buildEvents() {
+  const el = document.getElementById('events-list');
+  el.innerHTML = EVENTS.map(e => `<div class="event-item">
+    <span class="event-time">${e.t}</span>
+    <span class="event-msg">${e.msg}</span>
+  </div>`).join('');
+}
+
+// ─── DAG Rendering ─────────────────────────────────────────────────────
+function renderDAG() {
+  const svg = document.getElementById('dag-svg');
+  svg.innerHTML = '';
+
+  // Arrowhead marker
+  const defs = createSVG('defs');
+  const mkNorm = createMarker('arr-norm', '#7a91b0');
+  const mkBlue = createMarker('arr-blue', '#00d4ff');
+  const mkGreen= createMarker('arr-green','#22c55e');
+  const mkOrange=createMarker('arr-orange','#f59e0b');
+  defs.appendChild(mkNorm); defs.appendChild(mkBlue);
+  defs.appendChild(mkGreen); defs.appendChild(mkOrange);
+  svg.appendChild(defs);
+
+  // Draw edges
+  DAG_EDGES.forEach(e => {
+    const fn = DAG_NODES[e.from]; const tn = DAG_NODES[e.to];
+    const ft = TASKS.find(t=>t.id===e.from); const tt2 = TASKS.find(t=>t.id===e.to);
+    const x1 = fn.x + fn.w, y1 = fn.y + fn.h/2;
+    const x2 = tn.x,        y2 = tn.y + tn.h/2;
+    const mx = (x1+x2)/2;
+
+    let color, marker;
+    if(e.sod) { color='#f59e0b'; marker='url(#arr-orange)'; }
+    else if(ft&&ft.status==='completed') { color='#22c55e'; marker='url(#arr-green)'; }
+    else { color='#7a91b0'; marker='url(#arr-norm)'; }
+
+    const path = createSVG('path');
+    path.setAttribute('d', `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke', color);
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('marker-end', marker);
+    if(e.sod) {
+      path.setAttribute('stroke-dasharray','5,3');
+      path.setAttribute('stroke-width','1.5');
+    }
+    svg.appendChild(path);
+
+    // SoD lock icon
+    if(e.sod) {
+      const lx = mx - 6; const ly = (y1+y2)/2 - 7;
+      const lockG = createSVG('g');
+      const lockBg = createSVG('rect');
+      lockBg.setAttribute('x',lx-2); lockBg.setAttribute('y',ly-1);
+      lockBg.setAttribute('width',16); lockBg.setAttribute('height',14);
+      lockBg.setAttribute('rx','3'); lockBg.setAttribute('fill','#182540');
+      lockBg.setAttribute('stroke','#f59e0b'); lockBg.setAttribute('stroke-width','1');
+      const lockT = createSVG('text');
+      lockT.setAttribute('x', lx+4); lockT.setAttribute('y', ly+9);
+      lockT.setAttribute('font-size','9'); lockT.setAttribute('fill','#f59e0b');
+      lockT.setAttribute('text-anchor','middle');
+      lockT.textContent = '🔒';
+      lockG.appendChild(lockBg); lockG.appendChild(lockT);
+      svg.appendChild(lockG);
+    }
+  });
+
+  // Draw nodes
+  TASKS.forEach(t => {
+    const n = DAG_NODES[t.id];
+    const m = statusMeta(t.status);
+    const g = createSVG('g');
+    g.setAttribute('class','dag-node');
+    g.setAttribute('id','dag-'+t.id);
+    g.setAttribute('transform',`translate(${n.x},${n.y})`);
+
+    // Shadow rect
+    const shadow = createSVG('rect');
+    shadow.setAttribute('x','2'); shadow.setAttribute('y','2');
+    shadow.setAttribute('width',n.w); shadow.setAttribute('height',n.h);
+    shadow.setAttribute('rx','6'); shadow.setAttribute('fill','rgba(0,0,0,.4)');
+    g.appendChild(shadow);
+
+    // Main rect
+    const rect = createSVG('rect');
+    rect.setAttribute('width',n.w); rect.setAttribute('height',n.h);
+    rect.setAttribute('rx','6');
+    rect.setAttribute('fill','#111d33');
+    rect.setAttribute('stroke', m.color);
+    rect.setAttribute('stroke-width','1.5');
+    g.appendChild(rect);
+
+    // Status bar (left edge)
+    const sbar = createSVG('rect');
+    sbar.setAttribute('width','4'); sbar.setAttribute('height', n.h-12);
+    sbar.setAttribute('x','0'); sbar.setAttribute('y','6');
+    sbar.setAttribute('rx','2'); sbar.setAttribute('fill', m.color);
+    g.appendChild(sbar);
+
+    // Task number
+    const num = createSVG('text');
+    num.setAttribute('x','12'); num.setAttribute('y','14');
+    num.setAttribute('font-size','8'); num.setAttribute('fill','#7a91b0');
+    num.setAttribute('font-family','monospace');
+    num.textContent = `#${t.seq}`;
+    g.appendChild(num);
+
+    // Task label (wrapped)
+    const words = t.title.split(' ');
+    let line1='', line2='';
+    let charCount = 0;
+    const maxChars = Math.floor(n.w / 6.5);
+    for(const w of words) {
+      if(charCount + w.length + 1 <= maxChars) { line1 += (line1?' ':'')+w; charCount+=w.length+1; }
+      else { line2 += (line2?' ':'')+w; }
+    }
+    const tl1 = createSVG('text');
+    tl1.setAttribute('x',n.w/2); tl1.setAttribute('y', line2 ? '22' : '26');
+    tl1.setAttribute('font-size','9.5'); tl1.setAttribute('fill','#b8c5d8');
+    tl1.setAttribute('text-anchor','middle'); tl1.setAttribute('font-weight','500');
+    tl1.textContent = line1.length > maxChars ? line1.slice(0,maxChars-1)+'…' : line1;
+    g.appendChild(tl1);
+
+    if(line2) {
+      const tl2 = createSVG('text');
+      tl2.setAttribute('x',n.w/2); tl2.setAttribute('y','32');
+      tl2.setAttribute('font-size','9.5'); tl2.setAttribute('fill','#b8c5d8');
+      tl2.setAttribute('text-anchor','middle');
+      tl2.textContent = line2.length > maxChars ? line2.slice(0,maxChars-1)+'…' : line2;
+      g.appendChild(tl2);
+    }
+
+    // Progress bar inside node
+    const barBg = createSVG('rect');
+    barBg.setAttribute('x','8'); barBg.setAttribute('y',n.h-10);
+    barBg.setAttribute('width',n.w-16); barBg.setAttribute('height','3');
+    barBg.setAttribute('rx','2'); barBg.setAttribute('fill','#1e3052');
+    g.appendChild(barBg);
+    if(t.progress > 0) {
+      const barFg = createSVG('rect');
+      barFg.setAttribute('x','8'); barFg.setAttribute('y',n.h-10);
+      barFg.setAttribute('width', Math.round((n.w-16)*t.progress/100));
+      barFg.setAttribute('height','3');
+      barFg.setAttribute('rx','2'); barFg.setAttribute('fill', m.color);
+      g.appendChild(barFg);
+    }
+
+    // Running pulse indicator
+    if(t.status === 'running') {
+      const pcirc = createSVG('circle');
+      pcirc.setAttribute('cx', n.w-8); pcirc.setAttribute('cy', '8');
+      pcirc.setAttribute('r','3'); pcirc.setAttribute('fill','#00d4ff');
+      pcirc.setAttribute('class','pulse');
+      g.appendChild(pcirc);
+    }
+
+    // Events
+    g.addEventListener('mouseenter', (ev) => showTooltip(ev, t));
+    g.addEventListener('mousemove',  (ev) => moveTooltip(ev));
+    g.addEventListener('mouseleave', hideTooltip);
+    g.addEventListener('click', () => selectTask(t.id));
+
+    svg.appendChild(g);
+  });
+}
+
+function createSVG(tag) {
+  return document.createElementNS('http://www.w3.org/2000/svg', tag);
+}
+function createMarker(id, color) {
+  const m = createSVG('marker');
+  m.setAttribute('id',id); m.setAttribute('markerWidth','8'); m.setAttribute('markerHeight','6');
+  m.setAttribute('refX','7'); m.setAttribute('refY','3'); m.setAttribute('orient','auto');
+  const poly = createSVG('polygon');
+  poly.setAttribute('points','0 0, 8 3, 0 6'); poly.setAttribute('fill',color);
+  m.appendChild(poly); return m;
+}
+
+// ─── Tooltip ────────────────────────────────────────────────────────────
+let _ttEl = null;
+function showTooltip(ev, task) {
+  _ttEl = document.getElementById('tooltip');
+  const m = statusMeta(task.status);
+  const progColor = task.status==='completed'?'#22c55e':task.status==='running'?'#00d4ff':'#4a6080';
+  const qualStr = task.quality != null ? task.quality.toFixed(2) : '—';
+  const depStr = task.dependencies.length === 0 ? 'None (root task)' :
+    task.dependencies.map(d => {
+      const dt = TASKS.find(t=>t.id===d);
+      const done = dt && dt.status==='completed';
+      return `<span class="dep-tag"><span class="${done?'dep-check':'dep-pend'}">${done?'✓':'⏳'}</span>${d}</span>`;
+    }).join('');
+
+  _ttEl.innerHTML = `
+    <div class="tt-badge ${m.cls}">${m.label}</div>
+    <div class="tt-title">${task.title}</div>
+    <div class="tt-desc">${task.description.slice(0,100)}…</div>
+    <div class="tt-row"><span class="tt-key">Agent</span><span class="tt-val">${task.agent} · ${task.agentType}</span></div>
+    <div class="tt-row"><span class="tt-key">Progress</span>
+      <div class="tt-bar-wrap"><div class="tt-bar" style="width:${task.progress}%;background:${progColor}"></div></div>
+      <span class="tt-val">${task.progress}%</span>
+    </div>
+    <div class="tt-row"><span class="tt-key">Cost</span><span class="tt-val">${task.spent_cents} / ${task.budget_cents} tokens</span></div>
+    <div class="tt-row"><span class="tt-key">Quality</span><span class="tt-val">${qualStr}</span></div>
+    <div class="tt-row"><span class="tt-key">Risk</span><span class="tt-val" style="color:${task.riskColor}">${task.risk.toUpperCase()}</span></div>
+    <div class="tt-row"><span class="tt-key">Deps</span><span style="display:flex;flex-wrap:wrap;gap:3px;flex:1;justify-content:flex-end">${depStr}</span></div>
+    ${task.sod ? `<div class="tt-sod">⚡ SoD constraint — ${task.sodNote}</div>` : ''}
+    <div class="tt-caps">
+      <div class="tt-cap-label">JD — Required Capabilities</div>
+      <div class="tt-tags">${task.capabilities.map(c=>`<span class="tt-tag">${c}</span>`).join('')}</div>
+    </div>`;
+  _ttEl.style.display = 'block';
+  moveTooltip(ev);
+}
+function moveTooltip(ev) {
+  if(!_ttEl) return;
+  let x = ev.clientX + 14, y = ev.clientY + 14;
+  const W = window.innerWidth, H = window.innerHeight;
+  if(x + 290 > W) x = ev.clientX - 290;
+  if(y + 280 > H) y = ev.clientY - 280;
+  _ttEl.style.left = x+'px'; _ttEl.style.top = y+'px';
+}
+function hideTooltip() {
+  document.getElementById('tooltip').style.display = 'none';
+  _ttEl = null;
+}
+
+// ─── Select Task ────────────────────────────────────────────────────────
+let selectedTask = null;
+function selectTask(id) {
+  selectedTask = id;
+  // Highlight table row
+  document.querySelectorAll('.task-row').forEach(r => r.classList.remove('selected'));
+  const tr = document.getElementById('tr-'+id);
+  if(tr) tr.classList.add('selected');
+  // Highlight DAG node
+  document.querySelectorAll('.dag-node').forEach(n => n.classList.remove('selected'));
+  const dn = document.getElementById('dag-'+id);
+  if(dn) dn.classList.add('selected');
+  // Render detail panel
+  renderDetail(TASKS.find(t=>t.id===id));
+}
+
+function renderDetail(task) {
+  const el = document.getElementById('detail-content');
+  const m = statusMeta(task.status);
+  const progColor = task.status==='completed'?'#22c55e':task.status==='running'?'#00d4ff':'#4a6080';
+  const qualStr = task.quality != null ? task.quality.toFixed(2) : '—';
+  const costPct = Math.round(task.spent_cents/task.budget_cents*100);
+  const depItems = task.dependencies.length === 0 ?
+    '<span style="font-size:11px;color:var(--text3)">None — root task</span>' :
+    `<div class="dep-list">${task.dependencies.map(d=>{
+      const dt = TASKS.find(t=>t.id===d);
+      const done = dt&&dt.status==='completed';
+      return `<div class="dep-tag"><span class="${done?'dep-check':'dep-pend'}">${done?'✓':'⏳'}</span>${dt?dt.title.slice(0,30)+'…':d}</div>`;
+    }).join('')}</div>`;
+
+  el.innerHTML = `
+    <div class="detail-hdr">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
+        <span class="status-badge ${m.cls}"><span class="dot ${m.dot}" style="width:5px;height:5px;"></span>${m.label}</span>
+        <span style="font-size:10px;color:var(--text2);">${task.type} · #${task.seq}</span>
+      </div>
+      <div class="detail-title">${task.title}</div>
+      <div class="detail-desc">${task.description}</div>
+      <div class="detail-btns">
+        <button class="detail-btn">Retry</button>
+        <button class="detail-btn green">Accept</button>
+        <button class="detail-btn primary">Preview</button>
+      </div>
+    </div>
+    <div class="detail-body">
+
+      <div class="detail-row">
+        <div class="detail-row-label">Acceptance Criteria</div>
+        <ul class="criteria-list">
+          ${task.acceptance_criteria.map(c=>`<li><div class="crit-dot"></div><span>${c}</span></li>`).join('')}
+        </ul>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-row-label">Agent &amp; Capabilities</div>
+        <div class="detail-row-val" style="margin-bottom:6px;">${task.agent} — <span style="color:var(--text2)">${task.agentType}</span></div>
+        <div class="caps-list">${task.capabilities.map(c=>`<span class="cap-tag">${c}</span>`).join('')}</div>
+        ${task.sod ? `<div class="sod-badge">⚡ SoD: ${task.sodNote}</div>` : ''}
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-row-label">Metrics</div>
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="mk">Progress</div>
+            <div class="mv" style="color:${progColor}">${task.progress}%</div>
+            <div class="mb"><div class="mf" style="width:${task.progress}%;background:${progColor}"></div></div>
+          </div>
+          <div class="metric-card">
+            <div class="mk">Cost (tokens)</div>
+            <div class="mv">${task.spent_cents}<span style="font-size:11px;font-weight:400;color:var(--text2)"> / ${task.budget_cents}</span></div>
+            <div class="mb"><div class="mf" style="width:${costPct}%;background:${costPct>90?'#e8293a':'#00d4ff'}"></div></div>
+          </div>
+          <div class="metric-card">
+            <div class="mk">Quality</div>
+            <div class="mv" style="color:${task.quality!=null?(task.quality>=0.8?'#22c55e':'#f59e0b'):'var(--text2)'}">${qualStr}</div>
+          </div>
+          <div class="metric-card">
+            <div class="mk">Risk</div>
+            <div class="mv" style="color:${task.riskColor};font-size:13px;">${task.risk.toUpperCase()}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-row-label">Dependencies</div>
+        ${depItems}
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-row-label">Retry</div>
+        <div class="detail-row-val">${task.retry_count} / ${task.max_retries} max retries</div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-row-label">Timing</div>
+        <div class="timing-row"><span>Estimate</span><span class="timing-val">${task.estimated_s}s</span></div>
+        <div class="timing-row"><span>Timeout</span><span class="timing-val">${Math.round(task.estimated_s*1.2)}s</span></div>
+      </div>
+
+      <div class="detail-row">
+        <div class="detail-row-label">Recent Activity</div>
+        ${task.events.map(e=>`<div class="event-item" style="padding:4px 0;">
+          <span class="event-time">${e.t}</span>
+          <span class="event-msg">${e.msg}</span>
+        </div>`).join('')}
+      </div>
+
+    </div>`;
+}
+
+// ─── Project Select ────────────────────────────────────────────────────
+function selectProject(id) {
+  // Update active flag in data
+  PROJECTS.forEach(p => p.active = (p.id === id));
+  // Rebuild sidebar to reflect new active item
+  buildSidebar();
+  // Highlight project card (card may be filtered out if org filter is active)
+  document.querySelectorAll('.proj-card').forEach(el => el.classList.remove('active-card'));
+  const card = document.getElementById('pc-'+id);
+  if(card) card.classList.add('active-card');
+}
+
+// ─── Tab Switching ──────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id==='tab-'+tab));
+  document.getElementById('proj-header').style.display = (tab==='projects') ? 'none' : '';
+}
+
+// ─── Build Project Cards (#1 Projects) ─────────────────────────────────
+const PROJ_DETAIL = {
+  p1: {tasks:5,completed:1,budget:4900,spent:2180,type:'threat-hunt'},
+  p2: {tasks:6,completed:2,budget:5500,spent:1900,type:'zero-trust'},
+  p3: {tasks:4,completed:4,budget:3200,spent:3100,type:'compliance'},
+  p4: {tasks:5,completed:5,budget:4000,spent:3850,type:'vuln-scan'},
+  p5: {tasks:3,completed:0,budget:2500,spent:0,   type:'ai-security'},
+  p6: {tasks:4,completed:2,budget:3800,spent:1600,type:'firewall-ops'},
+  p7: {tasks:3,completed:0,budget:2200,spent:0,   type:'threat-surface'},
+  p8: {tasks:5,completed:5,budget:4200,spent:4050,type:'compliance'},
+  p9: {tasks:4,completed:0,budget:3600,spent:0,   type:'iot-security'},
+  p10:{tasks:6,completed:3,budget:5800,spent:2700,type:'compliance'},
+  p11:{tasks:3,completed:0,budget:2800,spent:0,   type:'ai-security'},
+};
+function buildProjectCards() {
+  const grid = document.getElementById('proj-cards');
+  if(!grid) return;
+
+  // Determine which projects to show
+  const visibleIds = activeOrgId
+    ? (ORGANIZATIONS.find(o => o.id === activeOrgId) || {projects:[]}).projects
+    : PROJECTS.map(p => p.id);
+  const visible = PROJECTS.filter(p => visibleIds.includes(p.id));
+
+  // Update summary stats
+  const psTotal   = document.getElementById('ps-total');
+  const psRunning = document.getElementById('ps-running');
+  const psDone    = document.getElementById('ps-completed');
+  const psOther   = document.getElementById('ps-other');
+  const psTotalLbl= document.getElementById('ps-total-label');
+  if(psTotal)   psTotal.textContent   = visible.length;
+  if(psRunning) psRunning.textContent = visible.filter(p=>p.status==='running'||p.status==='planning').length;
+  if(psDone)    psDone.textContent    = visible.filter(p=>p.status==='completed').length;
+  if(psOther)   psOther.textContent   = visible.filter(p=>p.status==='draft'||p.status==='failed').length;
+  if(psTotalLbl) psTotalLbl.textContent = activeOrgId
+    ? (ORGANIZATIONS.find(o=>o.id===activeOrgId)||{name:'?'}).name + ' Requests'
+    : 'Total Requests';
+
+  // Update filter bar
+  const filterBar   = document.getElementById('proj-filter-bar');
+  const filterTitle = document.getElementById('proj-filter-title');
+  if(filterBar) filterBar.style.display = activeOrgId ? 'flex' : 'none';
+  if(filterTitle && activeOrgId) {
+    const org = ORGANIZATIONS.find(o=>o.id===activeOrgId);
+    filterTitle.textContent = org ? `${org.name} — ${visible.length} Request${visible.length!==1?'s':''}` : '';
+  }
+
+  grid.innerHTML = visible.map(p => {
+    const m = statusMeta(p.status);
+    const d = PROJ_DETAIL[p.id] || {tasks:0,completed:0,budget:0,spent:0,type:'misc'};
+    const pct = d.tasks > 0 ? Math.round(d.completed/d.tasks*100) : 0;
+    const progColor = p.status==='running'?'#00d4ff':p.status==='completed'?'#22c55e':p.status==='failed'?'#e8293a':'#4a6080';
+    const costPct = d.budget > 0 ? Math.round(d.spent/d.budget*100) : 0;
+    return '<div class="proj-card '+(p.active?'active-card':'')+'" id="pc-'+p.id+'" onclick="selectProject(\''+p.id+'\')">'
+      +'<div class="proj-card-top"><div class="proj-card-name">'+p.name+'</div>'
+      +'<span class="status-badge '+m.cls+'"><span class="dot '+m.dot+'" style="width:5px;height:5px;"></span>'+m.label+'</span></div>'
+      +'<div class="proj-card-meta"><span>Tasks '+d.completed+'/'+d.tasks+'</span><span>'+d.spent.toLocaleString()+'/'+d.budget.toLocaleString()+' tkn</span></div>'
+      +'<div class="proj-card-prog"><div class="proj-card-progfill" style="width:'+pct+'%;background:'+progColor+'"></div></div>'
+      +'<div class="proj-card-footer"><span class="proj-type-badge">'+d.type+'</span><span style="font-size:10px;color:var(--text2);">'+pct+'% · cost '+costPct+'%</span></div>'
+      +'</div>';
+  }).join('');
+}
+
+// ─── Agent & JD Data (#3 Recruit) ──────────────────────────────────────
+// zone: 'employee' = dedicated to a staff member  |  'service' = IT shared pool
+// selfSchedule: claw can actively claim open tickets from queue without being assigned
+const AGENTS = [
+  {id:'agent-A',name:'ThreatClaw-A',zone:'employee',assignedTo:'Marcus L. (Boeing Threat Intel Team)',selfSchedule:true,
+   status:'available',  model:'ollama/llama-3.3-70b',  cost_1k:0, task:null,   hb_s:4,
+   caps:['threat-intel','mitre-attack','ioc-extraction','ttp-mapping'],
+   onprem:true,gpu:false,isolation:'Boeing-SEC-01 namespace'},
+  {id:'agent-B',name:'ThreatClaw-B',zone:'employee',assignedTo:'Priya S. (Cisco SecOps)',selfSchedule:false,
+   status:'busy',        model:'ollama/llama-3.3-70b',  cost_1k:0, task:'task2',hb_s:7,
+   caps:['pan-os-api','log-analysis','firewall-rule-audit','ioc-correlation'],
+   onprem:true,gpu:false,isolation:'Boeing-SEC-01 namespace'},
+  {id:'agent-C',name:'ThreatClaw-C',zone:'service', assignedTo:null,selfSchedule:true,
+   status:'busy',        model:'vllm/llama-3.1-405b',   cost_1k:0, task:'task3',hb_s:15,
+   caps:['litellm-audit','prompt-injection-detection','api-security','cve-scanning'],
+   onprem:true,gpu:true,isolation:'SEC-01 GPU cluster (isolated VLAN)'},
+  {id:'agent-D',name:'ThreatClaw-D',zone:'service', assignedTo:null,selfSchedule:true,
+   status:'available',   model:'ollama/mistral-7b-instruct',cost_1k:0,task:null, hb_s:11,
+   caps:['threat-assessment','sod-enforcement','independent-review','escalation-triage'],
+   onprem:true,gpu:false,isolation:'Boeing-SEC-01 namespace'},
+  {id:'agent-E',name:'ThreatClaw-E',zone:'service', assignedTo:null,selfSchedule:true,
+   status:'offline',     model:'ollama/codellama-34b',   cost_1k:0, task:null,   hb_s:null,
+   caps:['report-generation','nist-csf','remediation-planning','executive-brief'],
+   onprem:true,gpu:false,isolation:'offline'},
+];
+const JDS = [
+  {id:'jd-task4',task_id:'task4',seq:4,
+   title:'SoD Threat Reviewer — Mistral Lineage Required',
+   description:'Independent review of Task-2/3 findings. Must be Mistral family (≠ Llama-3.3-70b used by ThreatClaw-A/B/C). Hard SoD rule — Boeing IR policy.',
+   required_caps:['threat-assessment','sod-enforcement','independent-review','escalation-triage'],
+   sod_exclude:'agent-A',status:'open',match_ids:['agent-D']},
+  {id:'jd-task5',task_id:'task5',seq:5,
+   title:'NIST CSF Report Writer — Security Brief',
+   description:'Synthesize APT-29 findings into NIST CSF report with PAN-OS remediation roadmap. All on-prem — no external API calls.',
+   required_caps:['report-generation','nist-csf','remediation-planning','executive-brief'],
+   sod_exclude:null,status:'pending_deps',match_ids:['agent-D','agent-E']},
+];
+const HB_LOG = [
+  {t:'14:37:22',msg:'<b>ThreatClaw-C</b> — task3 LiteLLM audit 48% · 3/7 CVE-2024-5522 vectors · sandbox I/O clean [on-prem vllm]'},
+  {t:'14:37:15',msg:'<b>ThreatClaw-B</b> — task2 PAN-OS correlation 62% · 23 IOC hits P2 · encoded payload in User-Agent flagged'},
+  {t:'14:31:08',msg:'<b>ThreatClaw-B</b> — PAN-OS API token rotated (4h TTL) · TLS 1.3 session renewed · zero long-lived secrets'},
+  {t:'14:28:44',msg:'<b>NEMO</b> — ThreatClaw-C self-scheduled &amp; atomically checked out task3 (SoD: Llama lineage · task4 reserved for Mistral)'},
+  {t:'14:28:41',msg:'<b>NEMO</b> — ThreatClaw-B assigned task2 by Orchestrator (PAN-OS creds vault-injected · 4h TTL)'},
+  {t:'14:22:10',msg:'<b>ThreatClaw-A</b> — task1 IOC ingestion complete: 47 IPs · 12 domains · 8 hashes · SHA-256 verified'},
+  {t:'14:21:55',msg:'<b>NEMO</b> — ThreatClaw-A network namespace activated (no egress · Boeing-SEC-01 airgap enforced)'},
+  {t:'14:20:03',msg:'<b>Orchestrator</b> — APT-29 threat hunt DAG locked · 5 JDs posted · all on-prem ollama/vllm models'},
+  {t:'14:19:44',msg:'<b>VisionPlatform</b> — PAN-OS API handshake confirmed · TLS 1.3 · cert pinned · Boeing-SEC-01 enclave'},
+];
+function buildRecruitBoard() {
+  const jdEl = document.getElementById('jd-list'); if(!jdEl) return;
+  jdEl.innerHTML = JDS.map(jd => {
+    const sColor = jd.status==='open'?'var(--blue)':'var(--text3)';
+    const sLabel = jd.status==='open'?'OPEN':'PENDING DEPS';
+    const matches = AGENTS.filter(a => jd.match_ids.includes(a.id) && a.id !== jd.sod_exclude && a.status==='available');
+    const matchHtml = matches.length > 0
+      ? '<div class="jd-match">\u2713 '+matches.length+' qualified claw'+( matches.length>1?'s':'')+': '+matches.map(a=>a.name).join(', ')+'</div>'
+      : '<div class="jd-no-match">No available NemoClaw match yet</div>';
+    return '<div class="jd-card">'
+      +'<div class="jd-card-top"><span class="jd-card-title">'+jd.title+'</span><span style="font-size:10px;font-weight:700;color:'+sColor+'">'+sLabel+'</span></div>'
+      +'<span class="jd-task-ref">\u2192 task'+jd.seq+' \u00b7 '+jd.description+'</span>'
+      +'<div class="jd-caps">'+jd.required_caps.map(c=>'<span class="jd-cap">'+c+'</span>').join('')+'</div>'
+      +(jd.sod_exclude?'<div class="jd-sod">\u26a1 SoD: excludes '+(AGENTS.find(a=>a.id===jd.sod_exclude)||{name:jd.sod_exclude}).name+' lineage</div>':'')
+      +matchHtml+'</div>';
+  }).join('');
+  const agEl = document.getElementById('agent-list'); if(!agEl) return;
+  agEl.innerHTML = AGENTS.map(a => {
+    const sColor = a.status==='busy'?'var(--green)':a.status==='available'?'var(--blue)':'var(--text3)';
+    const hbText = a.hb_s!=null?'HB '+a.hb_s+'s ago':'offline';
+    const hbCls = a.status==='offline'?'hb-offline':'hb-active pulse';
+    const taskText = a.task?'On ticket: <strong>'+a.task+'</strong>':a.status==='available'?'Ready — awaiting ticket match':'Offline — no heartbeat';
+    // zone badge
+    const isEmployee = a.zone === 'employee';
+    const zoneBadgeColor = isEmployee ? 'rgba(88,166,255,.15)' : 'rgba(57,211,83,.12)';
+    const zoneBorderColor = isEmployee ? 'rgba(88,166,255,.4)' : 'rgba(57,211,83,.3)';
+    const zoneTextColor = isEmployee ? 'var(--blue)' : 'var(--cyan)';
+    const zoneLabel = isEmployee ? '👤 Employee Claw' : '⚙ Service Claw';
+    const borderCls = isEmployee ? 'agent-border-internal' : 'agent-border-external';
+    const assignedHtml = isEmployee
+      ? '<div style="font-size:10px;color:var(--text2);margin-top:3px;">Assigned to: <b style="color:var(--blue)">'+a.assignedTo+'</b></div>'
+      : '<div style="font-size:10px;color:var(--text2);margin-top:3px;">IT shared pool — available to all projects</div>';
+    const selfSchedHtml = a.selfSchedule
+      ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:rgba(210,153,34,.12);color:var(--orange);border:1px solid rgba(210,153,34,.25);">self-schedule</span>'
+      : '<span style="font-size:10px;color:var(--text3);">assigned-only</span>';
+    return '<div class="agent-card '+borderCls+'">'
+      +'<div class="agent-card-top"><div class="agent-name"><span class="dot" style="background:'+sColor+';width:7px;height:7px;"></span>'+a.name+' <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:'+zoneBadgeColor+';color:'+zoneTextColor+';border:1px solid '+zoneBorderColor+';">'+zoneLabel+'</span></div>'
+      +'<div class="hb-indicator"><span class="hb-dot '+hbCls+'"></span>'+hbText+'</div></div>'
+      +assignedHtml
+      +'<div style="display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap;">'
+      +'<div class="agent-model">'+a.model+'</div>'
+      +(a.onprem?(a.gpu?'<span class="airgap-tag">ON-PREM GPU</span>':'<span class="airgap-tag">ON-PREM · AIRGAP</span>'):'')
+      +'<div>'+selfSchedHtml+'</div></div>'
+      +(a.isolation&&a.isolation!=='offline'?'<div style="font-size:10px;color:#22c55e;margin-top:3px;">🔒 '+a.isolation+'</div>':'<div style="font-size:10px;color:var(--text3);margin-top:3px;">🔴 offline — no heartbeat</div>')
+      +'<div style="font-size:10px;color:#22c55e;margin-top:2px;">✓ Zero external API calls</div>'
+      +'<div class="agent-task" style="margin-top:5px;">'+taskText+'</div>'
+      +'<div class="agent-caps">'+a.caps.map(c=>'<span class="jd-cap">'+c+'</span>').join('')+'</div>'
+      +'</div>';
+  }).join('');
+  const hbEl = document.getElementById('hb-log'); if(!hbEl) return;
+  hbEl.innerHTML = HB_LOG.map(e=>'<div class="hb-entry"><span class="hb-ts">'+e.t+'</span><span class="hb-msg">'+e.msg+'</span></div>').join('');
+}
+
+// ─── Eval Dashboard (#4 Evaluate) ──────────────────────────────────────
+const EVAL_TASKS = [
+  {seq:1,title:'Define content layout',          verdict:'pass',    quality:0.94,cost:590, budget:600, time_s:617, retries:0},
+  {seq:2,title:'Add embedded CSS',                verdict:'running', quality:null,cost:820, budget:1500,time_s:null,retries:0},
+  {seq:3,title:'Implement index.html structure',  verdict:'running', quality:null,cost:610, budget:1200,time_s:null,retries:0},
+  {seq:4,title:'Security & SoD review',           verdict:'pending', quality:null,cost:0,   budget:800, time_s:null,retries:0},
+  {seq:5,title:'Validate preview & completeness', verdict:'pending', quality:null,cost:0,   budget:900, time_s:null,retries:0},
+];
+const SEC_EVENTS = [
+  {t:'14:37:22',level:'pass',msg:'<b>ThreatClaw-C</b> LiteLLM sandbox I/O scanned — no prompt boundary escape detected (3/7 CVE-2024-5522 vectors complete)'},
+  {t:'14:37:15',level:'warn',msg:'<b>ThreatClaw-B</b> PAN-OS log: encoded payload in User-Agent field — flagged for Task-4 SoD review · severity P2'},
+  {t:'14:31:08',level:'pass',msg:'<b>VisionPlatform</b> ThreatClaw-B PAN-OS API token rotated — previous token revoked — zero-knowledge handshake · TLS 1.3'},
+  {t:'14:28:44',level:'info',msg:'<b>NEMO</b> Agent isolation confirmed — ThreatClaw-C network namespace verified (no egress · Boeing-SEC-01 airgapped)'},
+  {t:'14:28:41',level:'info',msg:'<b>NEMO</b> Vault-injected PAN-OS credential lifespan: 4h rolling — no long-lived secrets stored in claw memory'},
+  {t:'14:22:10',level:'pass',msg:'<b>ThreatClaw-A</b> IOC feed checksum verified (SHA-256) — integrity confirmed before DAG release to downstream tasks'},
+  {t:'14:21:55',level:'pass',msg:'<b>NEMO</b> SoD pre-check: ThreatClaw-D (Mistral-7b) \u2260 ThreatClaw-A/B/C (Llama-3.3-70b) — constraint satisfied'},
+  {t:'14:20:03',level:'warn',msg:'<b>Planner</b> Customer request sanitized — APT-29 IOC keywords escaped before DAG decomposition (prompt injection prevention)'},
+];
+function buildEvalDashboard() {
+  const maxBudget = Math.max(...EVAL_TASKS.map(t=>t.budget));
+  const chartEl = document.getElementById('cost-chart'); if(!chartEl) return;
+  chartEl.innerHTML = EVAL_TASKS.map(t => {
+    const budgetW = Math.round(t.budget/maxBudget*100);
+    const spentW  = t.cost>0?Math.round(t.cost/maxBudget*100):0;
+    const spentColor = t.verdict==='pass'?'#22c55e':t.verdict==='running'?'#00d4ff':'#4a6080';
+    return '<div class="bar-row"><div class="bar-label">#'+t.seq+' '+t.title+'</div>'
+      +'<div class="bar-track"><div class="bar-fill bar-fill-budget" style="width:'+budgetW+'%;background:#00d4ff;"></div>'
+      +'<div class="bar-fill bar-fill-spent" style="width:'+spentW+'%;background:'+spentColor+';"></div></div>'
+      +'<div class="bar-val">'+(t.cost>0?t.cost.toLocaleString():'—')+' / '+t.budget.toLocaleString()+'</div></div>';
+  }).join('');
+  const tbodyEl = document.getElementById('eval-tbody'); if(!tbodyEl) return;
+  tbodyEl.innerHTML = EVAL_TASKS.map(t => {
+    const vClass = 'verdict-'+t.verdict;
+    const vLabel = t.verdict==='pass'?'\u2713 Pass':t.verdict==='running'?'\u27f3 Running':t.verdict==='pending'?'\u2014 Pending':t.verdict==='fail'?'\u2717 Fail':'\u26a1 Escalate';
+    return '<tr><td style="font-family:var(--font-mono);color:var(--text2)">#'+t.seq+'</td>'
+      +'<td style="color:var(--text1)">'+t.title+'</td>'
+      +'<td><span class="'+vClass+'">'+vLabel+'</span></td>'
+      +'<td style="font-family:var(--font-mono)">'+(t.quality!=null?t.quality.toFixed(2):'—')+'</td>'
+      +'<td style="font-family:var(--font-mono)">'+(t.cost>0?t.cost.toLocaleString():'—')+'</td>'
+      +'<td style="font-family:var(--font-mono)">'+(t.time_s!=null?t.time_s+'s':'—')+'</td>'
+      +'<td style="font-family:var(--font-mono)">'+t.retries+'</td></tr>';
+  }).join('');
+  const secEl = document.getElementById('sec-log'); if(!secEl) return;
+  secEl.innerHTML = SEC_EVENTS.map(e => {
+    const lc = e.level==='pass'?'sec-pass':e.level==='warn'?'sec-warn':'sec-info';
+    const ll = e.level==='pass'?'PASS':e.level==='warn'?'WARN':'INFO';
+    return '<div class="sec-event"><span class="event-time" style="font-family:var(--font-mono);color:var(--text3);white-space:nowrap;">'+e.t+'</span>'
+      +'<span class="sec-level '+lc+'">'+ll+'</span><span class="sec-msg">'+e.msg+'</span></div>';
+  }).join('');
+}
+
+// ─── Run Scheduler ─────────────────────────────────────────────────────
+function runScheduler() {
+  const btn = event.currentTarget;
+  btn.textContent = '⟳ Scheduling…';
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.textContent = '▶ Run scheduler';
+    btn.disabled = false;
+    // Add a fake event
+    const el = document.getElementById('events-list');
+    const ev = document.createElement('div');
+    ev.className = 'event-item';
+    const now = new Date();
+    const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+    ev.innerHTML = `<span class="event-time">${ts}</span><span class="event-msg"><strong>Scheduler</strong> — heartbeat tick, 2 tasks running, 2 blocked</span>`;
+    el.insertBefore(ev, el.firstChild);
+  }, 1200);
+}
+
+// ─── Init ──────────────────────────────────────────────────────────────
+buildSidebar();
+buildProjectCards();
+buildTaskTable();
+buildEvents();
+buildRecruitBoard();
+buildEvalDashboard();
+renderDAG();
+
+// Auto-select first task (DAG tab is default)
+selectTask('task1');
+
+// Simulate progress ticking for running tasks
+setInterval(() => {
+  ['task2','task3'].forEach(id => {
+    const t = TASKS.find(x=>x.id===id);
+    if(t && t.status==='running' && t.progress < 98) {
+      t.progress += Math.random() > .7 ? 1 : 0;
+      const tr = document.getElementById('tr-'+id);
+      if(tr) {
+        const progEl = tr.querySelectorAll('.mini-prog');
+        if(progEl[0]) progEl[0].style.width = t.progress+'%';
+        const pctEl = tr.querySelector('td:nth-child(4) div');
+        if(pctEl) pctEl.textContent = t.progress+'%';
+      }
+      if(selectedTask===id) renderDetail(t);
+    }
+  });
+  // Keep eval chart in sync
+  buildEvalDashboard();
+}, 3000);
+
+// Animate heartbeat dots
+setInterval(() => {
+  document.querySelectorAll('.hb-active').forEach(d => {
+    d.style.opacity = (d.style.opacity === '0.4') ? '1' : '0.4';
+  });
+}, 800);
+</script>
+</body>
+</html>
