@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Finding NEMO — Control Room</title>
+<title>AI Agent Orchestrator Layer Finding NEMO</title>
 <style>
 /* ─── Reset & Variables ───────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -73,6 +73,28 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
 .dot-gray   { background: var(--text3); }
 .dot-red    { background: var(--red); }
 .dot-orange { background: var(--orange); }
+
+/* ─── Org Sidebar Items ───────────────────────────────────────────── */
+.org-item { border-bottom: 1px solid var(--border-subtle); }
+.org-header { display: flex; align-items: flex-start; gap: 6px; padding: 8px 12px; cursor: pointer; transition: background .12s; }
+.org-header:hover { background: var(--bg2); }
+.org-toggle { font-size: 8px; color: var(--text2); flex-shrink: 0; margin-top: 3px; }
+.org-info { flex: 1; min-width: 0; }
+.org-name { font-size: 12px; font-weight: 600; color: var(--text0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.org-meta { font-size: 10px; color: var(--text2); margin-top: 1px; }
+.org-projects { display: none; background: var(--bg0); }
+.org-projects.expanded { display: block; }
+.org-proj-item { display: flex; align-items: flex-start; gap: 6px; padding: 4px 12px 4px 24px; cursor: pointer; border-left: 2px solid transparent; transition: background .1s; }
+.org-proj-item:hover { background: var(--bg2); }
+.org-proj-item.active { background: var(--bg2); border-left-color: var(--blue); }
+.org-proj-name { font-size: 11px; color: var(--text1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
+.org-proj-item.active .org-proj-name { color: var(--blue); }
+.org-item.active-org > .org-header { background: rgba(56,139,253,.07); border-left: 2px solid var(--blue); }
+.org-item.active-org .org-name { color: var(--blue); }
+.org-filter-bar { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.org-filter-bar .ofb-title { font-size:14px; font-weight:600; color:var(--text0); }
+.org-filter-bar .ofb-clear { font-size:11px; color:var(--blue); cursor:pointer; }
+.org-filter-bar .ofb-clear:hover { text-decoration:underline; }
 
 /* ─── Main + Detail ───────────────────────────────────────────────── */
 #main { flex: 1; overflow: hidden; display: flex; flex-direction: row; }
@@ -466,12 +488,12 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
     <div class="brand">
       <div class="nemo-logo">N</div>
       <div>
-        <div class="brand-name">NEMO</div>
+        <div class="brand-name">Finding NEMO</div>
+        <div class="brand-sub">AI Agent Orchestrator Layer</div>
       </div>
-      <div class="brand-sub">Control Room</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <span style="font-size:11px;color:var(--text2);">11 projects · updated now</span>
+      <span style="font-size:11px;color:var(--text2);">4 orgs · 11 projects · updated now</span>
       <button class="btn btn-green" onclick="runScheduler()">▶ Run scheduler</button>
     </div>
   </div>
@@ -480,11 +502,8 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
     <!-- Sidebar -->
     <div id="sidebar">
       <div class="sidebar-section">
-        <span class="sidebar-label">Projects</span>
-        <span class="sidebar-action" onclick="alert('New project')">+ New</span>
-      </div>
-      <div class="sidebar-section" style="padding-top:4px;">
-        <span class="sidebar-label" style="font-size:10px;">Legacy UI</span>
+        <span class="sidebar-label">Organizations</span>
+        <span class="sidebar-action" onclick="alert('New organization')">+ New</span>
       </div>
       <div class="project-list" id="project-list"></div>
     </div>
@@ -527,21 +546,26 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
             <!-- summary stats -->
             <div class="projects-summary">
               <div class="summary-card">
-                <div class="sc-label">Total Projects</div>
-                <div class="sc-val" style="color:var(--text0)">11</div>
+                <div class="sc-label" id="ps-total-label">Total Projects</div>
+                <div class="sc-val" style="color:var(--text0)" id="ps-total">11</div>
               </div>
               <div class="summary-card">
                 <div class="sc-label">Running</div>
-                <div class="sc-val" style="color:var(--blue)">2</div>
+                <div class="sc-val" style="color:var(--blue)" id="ps-running">2</div>
               </div>
               <div class="summary-card">
                 <div class="sc-label">Completed</div>
-                <div class="sc-val" style="color:var(--green)">3</div>
+                <div class="sc-val" style="color:var(--green)" id="ps-completed">3</div>
               </div>
               <div class="summary-card">
                 <div class="sc-label">Failed / Draft</div>
-                <div class="sc-val" style="color:var(--red)">6</div>
+                <div class="sc-val" style="color:var(--red)" id="ps-other">6</div>
               </div>
+            </div>
+            <!-- org filter bar (shown when an org is selected) -->
+            <div class="org-filter-bar" id="proj-filter-bar" style="display:none;">
+              <span class="ofb-title" id="proj-filter-title"></span>
+              <span class="ofb-clear" onclick="selectOrg(null)">✕ All orgs</span>
             </div>
             <!-- project cards -->
             <div class="proj-grid" id="proj-cards"></div>
@@ -936,16 +960,49 @@ const STATUS_META = {
 
 function statusMeta(s) { return STATUS_META[s] || STATUS_META.queued; }
 
+// ─── Organizations ─────────────────────────────────────────────────────
+const ORGANIZATIONS = [
+  { id:'org1', name:'Acme Bakery Co.',   industry:'Food & Beverage', projects:['p1','p2','p3','p4']  },
+  { id:'org2', name:'FreshStart Foods',  industry:'Food Tech',       projects:['p5','p6','p7']       },
+  { id:'org3', name:'TechBuild Labs',    industry:'Engineering',     projects:['p8','p9']            },
+  { id:'org4', name:'NovaSite Agency',   industry:'Web Agency',      projects:['p10','p11']          },
+];
+let activeOrgId = null; // null = all orgs
+
 // ─── Build Sidebar ─────────────────────────────────────────────────────
 function buildSidebar() {
   const el = document.getElementById('project-list');
-  el.innerHTML = PROJECTS.map(p => {
-    const m = statusMeta(p.status);
-    return `<div class="project-item ${p.active?'active':''}" data-id="${p.id}" onclick="selectProject('${p.id}')">
-      <div class="pname">${p.name}</div>
-      <div class="pmeta"><div class="dot ${m.dot}"></div><span>${m.label.toLowerCase()} · now</span></div>
+  el.innerHTML = ORGANIZATIONS.map(org => {
+    const orgProjects = PROJECTS.filter(p => org.projects.includes(p.id));
+    const runningCount = orgProjects.filter(p => p.status === 'running').length;
+    const metaExtra = runningCount > 0 ? ` · <span style="color:var(--blue)">${runningCount} running</span>` : '';
+    const isActive = activeOrgId === org.id;
+
+    const projItems = orgProjects.map(p => {
+      const m = statusMeta(p.status);
+      return `<div class="org-proj-item ${p.active?'active':''}" data-id="${p.id}" onclick="event.stopPropagation();selectProject('${p.id}')">
+        <div class="dot ${m.dot}" style="width:5px;height:5px;flex-shrink:0;margin-top:5px;"></div>
+        <span class="org-proj-name">${p.name}</span>
+      </div>`;
+    }).join('');
+
+    return `<div class="org-item ${isActive?'active-org':''}">
+      <div class="org-header" onclick="selectOrg('${org.id}')">
+        <div class="org-info">
+          <div class="org-name">${org.name}</div>
+          <div class="org-meta">${orgProjects.length} project${orgProjects.length!==1?'s':''} · ${org.industry}${metaExtra}</div>
+        </div>
+      </div>
+      <div class="org-projects expanded">${projItems}</div>
     </div>`;
   }).join('');
+}
+
+// ─── Org Filter ────────────────────────────────────────────────────────
+function selectOrg(orgId) {
+  activeOrgId = (activeOrgId === orgId) ? null : orgId; // toggle off if same
+  buildSidebar();
+  buildProjectCards();
 }
 
 // ─── Build Task Table ──────────────────────────────────────────────────
@@ -1311,10 +1368,12 @@ function renderDetail(task) {
 
 // ─── Project Select ────────────────────────────────────────────────────
 function selectProject(id) {
-  document.querySelectorAll('.project-item').forEach(el => el.classList.remove('active'));
+  // Update active flag in data
+  PROJECTS.forEach(p => p.active = (p.id === id));
+  // Rebuild sidebar to reflect new active item
+  buildSidebar();
+  // Highlight project card (card may be filtered out if org filter is active)
   document.querySelectorAll('.proj-card').forEach(el => el.classList.remove('active-card'));
-  const sideItem = document.querySelector(`.project-item[data-id="${id}"]`);
-  if(sideItem) sideItem.classList.add('active');
   const card = document.getElementById('pc-'+id);
   if(card) card.classList.add('active-card');
 }
@@ -1343,7 +1402,37 @@ const PROJ_DETAIL = {
 function buildProjectCards() {
   const grid = document.getElementById('proj-cards');
   if(!grid) return;
-  grid.innerHTML = PROJECTS.map(p => {
+
+  // Determine which projects to show
+  const visibleIds = activeOrgId
+    ? (ORGANIZATIONS.find(o => o.id === activeOrgId) || {projects:[]}).projects
+    : PROJECTS.map(p => p.id);
+  const visible = PROJECTS.filter(p => visibleIds.includes(p.id));
+
+  // Update summary stats
+  const psTotal   = document.getElementById('ps-total');
+  const psRunning = document.getElementById('ps-running');
+  const psDone    = document.getElementById('ps-completed');
+  const psOther   = document.getElementById('ps-other');
+  const psTotalLbl= document.getElementById('ps-total-label');
+  if(psTotal)   psTotal.textContent   = visible.length;
+  if(psRunning) psRunning.textContent = visible.filter(p=>p.status==='running'||p.status==='planning').length;
+  if(psDone)    psDone.textContent    = visible.filter(p=>p.status==='completed').length;
+  if(psOther)   psOther.textContent   = visible.filter(p=>p.status==='draft'||p.status==='failed').length;
+  if(psTotalLbl) psTotalLbl.textContent = activeOrgId
+    ? (ORGANIZATIONS.find(o=>o.id===activeOrgId)||{name:'?'}).name + ' Projects'
+    : 'Total Projects';
+
+  // Update filter bar
+  const filterBar   = document.getElementById('proj-filter-bar');
+  const filterTitle = document.getElementById('proj-filter-title');
+  if(filterBar) filterBar.style.display = activeOrgId ? 'flex' : 'none';
+  if(filterTitle && activeOrgId) {
+    const org = ORGANIZATIONS.find(o=>o.id===activeOrgId);
+    filterTitle.textContent = org ? `${org.name} — ${visible.length} Project${visible.length!==1?'s':''}` : '';
+  }
+
+  grid.innerHTML = visible.map(p => {
     const m = statusMeta(p.status);
     const d = PROJ_DETAIL[p.id] || {tasks:0,completed:0,budget:0,spent:0,type:'misc'};
     const pct = d.tasks > 0 ? Math.round(d.completed/d.tasks*100) : 0;
