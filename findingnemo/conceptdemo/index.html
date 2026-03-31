@@ -489,11 +489,11 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
       <div class="nemo-logo">N</div>
       <div>
         <div class="brand-name">Finding NEMO</div>
-        <div class="brand-sub">AI Agent Orchestrator Layer</div>
+        <div class="brand-sub">AI Agent Orchestrator Layer · NVIDIA OpenShell</div>
       </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <span style="font-size:11px;color:var(--text2);">4 orgs · 11 projects · updated now</span>
+      <span style="font-size:11px;color:var(--text2);">4 customers · 11 requests · updated now</span>
       <button class="btn btn-green" onclick="runScheduler()">▶ Run scheduler</button>
     </div>
   </div>
@@ -502,8 +502,8 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
     <!-- Sidebar -->
     <div id="sidebar">
       <div class="sidebar-section">
-        <span class="sidebar-label">Organizations</span>
-        <span class="sidebar-action" onclick="alert('New organization')">+ New</span>
+        <span class="sidebar-label">Customers</span>
+        <span class="sidebar-action" onclick="alert('New customer request')">+ New Request</span>
       </div>
       <div class="project-list" id="project-list"></div>
     </div>
@@ -546,7 +546,7 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
             <!-- summary stats -->
             <div class="projects-summary">
               <div class="summary-card">
-                <div class="sc-label" id="ps-total-label">Total Projects</div>
+                <div class="sc-label" id="ps-total-label">Total Requests</div>
                 <div class="sc-val" style="color:var(--text0)" id="ps-total">11</div>
               </div>
               <div class="summary-card">
@@ -569,14 +569,15 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
             </div>
             <!-- project cards -->
             <div class="proj-grid" id="proj-cards"></div>
-            <!-- new project form -->
+            <!-- new customer request form -->
             <div class="new-proj-section">
-              <h3>New Project</h3>
-              <div class="form-row"><div class="form-label">Title</div><input class="form-input" placeholder="Describe the deliverable in one line"></div>
-              <div class="form-row"><div class="form-label">Request / Scope</div><textarea class="form-textarea" placeholder="Full task description, constraints, acceptance criteria…"></textarea></div>
+              <h3>Submit Customer Request</h3>
+              <div style="font-size:11px;color:var(--text2);margin-bottom:10px;">Each request forms a project. The Orchestrator decomposes it into a task DAG, assigns NemoClaws, and enforces agent isolation &amp; SoD policies.</div>
+              <div class="form-row"><div class="form-label">Request Title</div><input class="form-input" placeholder="Describe the customer's deliverable in one line"></div>
+              <div class="form-row"><div class="form-label">Request Details &amp; Acceptance Criteria</div><textarea class="form-textarea" placeholder="Full description, constraints, acceptance criteria, compliance requirements…"></textarea></div>
               <div style="display:flex;gap:8px;align-items:center;">
-                <button class="btn btn-primary">Create &amp; Plan</button>
-                <span style="font-size:11px;color:var(--text2);">Orchestrator will decompose into a task DAG automatically.</span>
+                <button class="btn btn-primary">Submit &amp; Plan</button>
+                <span style="font-size:11px;color:var(--text2);">Orchestrator will form a project and decompose into a task DAG automatically.</span>
               </div>
             </div>
           </div>
@@ -594,7 +595,7 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
               <!-- Planner Summary -->
               <div style="padding:10px 24px 8px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;">
                 <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);margin-bottom:4px;">Planner Summary — Orchestrator</div>
-                <div style="font-size:12px;color:var(--text2);">Adaptive decomposition: 5 tasks in a DAG (2 parallel tracks). Task-2 and Task-3 run concurrently. SoD enforced: Task-3 (build) and Task-4 (review) must be different agents. Final validation (Task-5) gates on both tracks passing.</div>
+                <div style="font-size:12px;color:var(--text2);">Customer request decomposed into 5-task DAG (2 parallel tracks). Task-2 and Task-3 run concurrently — assigned to Employee Claws (Claw-A, Claw-B). SoD enforced: Task-3 builder and Task-4 reviewer must be different NemoClaw lineages. Final validation (Task-5) gates on both tracks passing. All claws managed by NVIDIA OpenShell.</div>
               </div>
               <!-- WBS / DAG Panel -->
               <div id="wbs-panel">
@@ -643,38 +644,47 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
           <!-- ── TAB #3: RECRUIT ───────────────────────────────────── -->
           <div class="tab-pane" id="tab-recruit">
             <!-- top info bar -->
-            <div style="padding:10px 16px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
-              <div style="font-size:12px;color:var(--text2);">
-                Finding NEMO — Recruit Bulletin Board &nbsp;·&nbsp;
-                <span style="color:var(--text1);">Orchestrator posts Job Descriptions, worker agents bid, NEMO matches &amp; atomically checks out.</span>
-              </div>
-              <div style="display:flex;gap:6px;">
-                <span style="font-size:11px;color:var(--green);display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;"></span>2 busy</span>
-                <span style="font-size:11px;color:var(--blue);display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--blue);display:inline-block;"></span>2 available</span>
-                <span style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--text3);display:inline-block;"></span>1 offline</span>
+            <div style="padding:10px 16px;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;">
+                <div>
+                  <div style="font-size:12px;font-weight:600;color:var(--text0);margin-bottom:4px;">NemoClaw Dispatch Board</div>
+                  <div style="font-size:11px;color:var(--text2);line-height:1.6;max-width:680px;">
+                    IT manages a pool of <b style="color:var(--blue)">NemoClaws</b> backed by <b style="color:var(--purple)">NVIDIA OpenShell</b>.
+                    Claws are either <b style="color:var(--green)">assigned to employees</b> (dedicated) or deployed as
+                    <b style="color:var(--cyan)">shared service claws</b> in the IT pool.
+                    The Orchestrator posts <b style="color:var(--text1)">Claw JDs</b> (tickets) — claws can be assigned a ticket by the system
+                    or <b style="color:var(--orange)">self-schedule</b> by actively claiming open tickets from the queue.
+                    NEMO enforces isolation &amp; SoD before any checkout.
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0;font-size:11px;">
+                  <span style="color:var(--green);display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;"></span>2 active</span>
+                  <span style="color:var(--blue);display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--blue);display:inline-block;"></span>2 ready</span>
+                  <span style="color:var(--text3);display:flex;align-items:center;gap:4px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--text3);display:inline-block;"></span>1 offline</span>
+                </div>
               </div>
             </div>
             <div class="recruit-body">
-              <!-- Open Positions (JDs) -->
+              <!-- Open Tickets (JDs) -->
               <div class="recruit-col">
                 <div class="recruit-col-hdr">
-                  <span class="recruit-col-title">Open Positions (Job Descriptions)</span>
+                  <span class="recruit-col-title">Open Tickets (Claw JDs)</span>
                   <span class="recruit-count" id="jd-count">2 open</span>
                 </div>
                 <div id="jd-list"></div>
               </div>
-              <!-- Agent Pool -->
+              <!-- NemoClaw Registry -->
               <div class="recruit-col">
                 <div class="recruit-col-hdr">
-                  <span class="recruit-col-title">Agent Pool — Resource Registry</span>
-                  <span class="recruit-count">5 registered</span>
+                  <span class="recruit-col-title">NemoClaw Registry — NVIDIA OpenShell</span>
+                  <span class="recruit-count">5 claws</span>
                 </div>
                 <div id="agent-list"></div>
               </div>
-              <!-- Heartbeat Log -->
+              <!-- Dispatch Log -->
               <div class="recruit-col" style="max-width:320px;">
                 <div class="recruit-col-hdr">
-                  <span class="recruit-col-title">Heartbeat Log</span>
+                  <span class="recruit-col-title">Dispatch Log</span>
                   <span class="recruit-count pulse" style="color:var(--green)">live</span>
                 </div>
                 <div class="hb-log" id="hb-log"></div>
@@ -755,8 +765,9 @@ html, body { height: 100%; font-family: var(--font); background: var(--bg0); col
                     </div>
                   </div>
                   <div style="margin-top:12px;padding:10px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:12px;color:var(--text2);line-height:1.6;">
-                    Current run: <b style="color:var(--text0)">2 parallel tracks</b> (Task-2 CSS + Task-3 HTML), reducing wall time by ~43% vs sequential.
-                    SoD gate adds ~800 tokens overhead for Task-4 independent review — cost justified by security guarantee.
+                    Current run: <b style="color:var(--text0)">2 parallel tracks</b> (Task-2 CSS via Claw-B + Task-3 HTML via Claw-A), reducing wall time by ~43% vs sequential.
+                    SoD gate adds ~800 tokens overhead for Task-4 independent review by Claw-C (different lineage) — cost justified by security guarantee.
+                    NVIDIA OpenShell manages claw isolation and runtime enforcement.
                   </div>
                 </div>
               </div>
@@ -807,7 +818,7 @@ const TASKS = [
     description:'Draft the exact section order, section copy, and content blocks for a simple bakery landing page. Include hero, products, about, hours, location, contact.',
     type:'research', status:'completed',
     dependencies:[],
-    agent:'Agent-A', agentType:'Planner / Summarizer', agentCount:1,
+    agent:'Claw-A', agentType:'Employee Claw / Planner-Summarizer', agentCount:1,
     budget_cents:600, spent_cents:590, progress:100,
     quality:0.94, risk:'low', riskColor:'#3fb950',
     acceptance_criteria:[
@@ -819,7 +830,7 @@ const TASKS = [
     retry_count:0, max_retries:2,
     estimated_s:600, sod:false,
     events:[
-      { t:'09:01:04', msg:'Agent-A checked out task1' },
+      { t:'09:01:04', msg:'Claw-A self-scheduled task1 (employee claw · Sarah K.)' },
       { t:'09:01:12', msg:'Content outline drafted' },
       { t:'09:11:18', msg:'Evaluation: pass (quality 0.94)' },
     ]
@@ -830,7 +841,7 @@ const TASKS = [
     description:'Design and implement embedded CSS inside index.html to give the bakery page a clean, inviting visual style. All styles must be self-contained in a <style> tag.',
     type:'build', status:'running',
     dependencies:['task1'],
-    agent:'Agent-B', agentType:'Builder / CSS Designer', agentCount:1,
+    agent:'Claw-B', agentType:'Employee Claw / CSS Builder', agentCount:1,
     budget_cents:1500, spent_cents:820, progress:55,
     quality:null, risk:'low', riskColor:'#3fb950',
     acceptance_criteria:[
@@ -843,7 +854,7 @@ const TASKS = [
     retry_count:0, max_retries:2,
     estimated_s:1500, sod:false,
     events:[
-      { t:'09:11:25', msg:'Agent-B checked out task2 (deps satisfied)' },
+      { t:'09:11:25', msg:'Claw-B assigned to task2 by Orchestrator (Mike T. employee claw)' },
       { t:'09:15:33', msg:'CSS skeleton committed to workspace' },
       { t:'09:22:10', msg:'Heartbeat — 55% complete' },
     ]
@@ -854,7 +865,7 @@ const TASKS = [
     description:'Create index.html in the project workspace with the full semantic HTML structure for all sections. Must be self-contained — no external assets.',
     type:'build', status:'running',
     dependencies:['task1'],
-    agent:'Agent-B2', agentType:'Builder / HTML', agentCount:1,
+    agent:'Claw-A', agentType:'Employee Claw / HTML Builder', agentCount:1,
     budget_cents:1200, spent_cents:610, progress:51,
     quality:null, risk:'medium', riskColor:'#d29922',
     acceptance_criteria:[
@@ -867,7 +878,7 @@ const TASKS = [
     retry_count:0, max_retries:2,
     estimated_s:1200, sod:true, sodNote:'Task-4 reviewer must be a different agent (SoD)',
     events:[
-      { t:'09:11:27', msg:'Agent-B2 checked out task3 (parallel with task2)' },
+      { t:'09:11:27', msg:'Claw-A self-scheduled task3 (parallel with task2, SoD enforced)' },
       { t:'09:18:44', msg:'HTML skeleton committed' },
       { t:'09:22:15', msg:'Heartbeat — 51% complete' },
     ]
@@ -875,10 +886,10 @@ const TASKS = [
   {
     id:'task4', seq:4,
     title:'Security & SoD review of HTML structure',
-    description:'Independent audit of index.html by a different agent lineage. Verify no XSS vectors, privilege boundary respected, and all acceptance criteria from task3 met.',
+    description:'Independent audit of index.html by a different NemoClaw lineage. Verify no XSS vectors, privilege boundary respected, and all acceptance criteria from task3 met.',
     type:'review', status:'blocked',
     dependencies:['task3'],
-    agent:'Agent-C', agentType:'Reviewer (different lineage — SoD)', agentCount:1,
+    agent:'Claw-C', agentType:'Service Claw / Security Reviewer (SoD)', agentCount:1,
     budget_cents:800, spent_cents:0, progress:0,
     quality:null, risk:'low', riskColor:'#3fb950',
     acceptance_criteria:[
@@ -891,16 +902,16 @@ const TASKS = [
     retry_count:0, max_retries:1,
     estimated_s:800, sod:true, sodNote:'Must use different model vendor from task3 builder',
     events:[
-      { t:'09:22:16', msg:'task4 queued — waiting for task3 completion' },
+      { t:'09:22:16', msg:'task4 queued — Claw-C ready to self-schedule once task3 completes' },
     ]
   },
   {
     id:'task5', seq:5,
     title:'Validate direct preview, completeness, and content quality',
-    description:'Review the final index.html to verify it satisfies the project request when opened directly as a static file. Check all sections, self-containment, and layout.',
+    description:'Review the final index.html to verify it satisfies the customer request when opened directly as a static file. Check all sections, self-containment, and layout.',
     type:'review', status:'blocked',
     dependencies:['task2','task4'],
-    agent:'Agent-D', agentType:'Evaluator (independent)', agentCount:1,
+    agent:'Claw-D', agentType:'Service Claw / Evaluator (independent)', agentCount:1,
     budget_cents:900, spent_cents:0, progress:0,
     quality:null, risk:'low', riskColor:'#3fb950',
     acceptance_criteria:[
@@ -913,19 +924,19 @@ const TASKS = [
     retry_count:0, max_retries:2,
     estimated_s:900, sod:false,
     events:[
-      { t:'09:22:16', msg:'task5 queued — waiting for task2 + task4' },
+      { t:'09:22:16', msg:'task5 queued — Claw-D ready to self-schedule once task2 + task4 complete' },
     ]
   }
 ];
 
 const EVENTS = [
   { t:'09:22:16', msg:'<strong>task5</strong> queued — waiting for task2 + task4' },
-  { t:'09:22:15', msg:'<strong>task3</strong> heartbeat — 51% complete, Agent-B2' },
-  { t:'09:22:10', msg:'<strong>task2</strong> heartbeat — 55% complete, Agent-B' },
-  { t:'09:11:27', msg:'<strong>task3</strong> checked out by Agent-B2 (parallel with task2, SoD enforced)' },
-  { t:'09:11:25', msg:'<strong>task2</strong> checked out by Agent-B' },
+  { t:'09:22:15', msg:'<strong>task3</strong> heartbeat — 51% complete, Claw-A (employee · Sarah K.)' },
+  { t:'09:22:10', msg:'<strong>task2</strong> heartbeat — 55% complete, Claw-B (employee · Mike T.)' },
+  { t:'09:11:27', msg:'<strong>task3</strong> self-scheduled by Claw-A (parallel with task2, SoD enforced)' },
+  { t:'09:11:25', msg:'<strong>task2</strong> assigned to Claw-B by Orchestrator' },
   { t:'09:11:18', msg:'<strong>task1</strong> evaluation passed (quality 0.94) — 2 downstream tasks released' },
-  { t:'09:01:04', msg:'Planner decomposed objective into 5-task DAG' },
+  { t:'09:01:04', msg:'Planner decomposed customer request into 5-task DAG' },
 ];
 
 // ─── DAG Layout ────────────────────────────────────────────────────────
@@ -990,7 +1001,7 @@ function buildSidebar() {
       <div class="org-header" onclick="selectOrg('${org.id}')">
         <div class="org-info">
           <div class="org-name">${org.name}</div>
-          <div class="org-meta">${orgProjects.length} project${orgProjects.length!==1?'s':''} · ${org.industry}${metaExtra}</div>
+          <div class="org-meta">${orgProjects.length} request${orgProjects.length!==1?'s':''} · ${org.industry}${metaExtra}</div>
         </div>
       </div>
       <div class="org-projects expanded">${projItems}</div>
@@ -1420,8 +1431,8 @@ function buildProjectCards() {
   if(psDone)    psDone.textContent    = visible.filter(p=>p.status==='completed').length;
   if(psOther)   psOther.textContent   = visible.filter(p=>p.status==='draft'||p.status==='failed').length;
   if(psTotalLbl) psTotalLbl.textContent = activeOrgId
-    ? (ORGANIZATIONS.find(o=>o.id===activeOrgId)||{name:'?'}).name + ' Projects'
-    : 'Total Projects';
+    ? (ORGANIZATIONS.find(o=>o.id===activeOrgId)||{name:'?'}).name + ' Requests'
+    : 'Total Requests';
 
   // Update filter bar
   const filterBar   = document.getElementById('proj-filter-bar');
@@ -1429,7 +1440,7 @@ function buildProjectCards() {
   if(filterBar) filterBar.style.display = activeOrgId ? 'flex' : 'none';
   if(filterTitle && activeOrgId) {
     const org = ORGANIZATIONS.find(o=>o.id===activeOrgId);
-    filterTitle.textContent = org ? `${org.name} — ${visible.length} Project${visible.length!==1?'s':''}` : '';
+    filterTitle.textContent = org ? `${org.name} — ${visible.length} Request${visible.length!==1?'s':''}` : '';
   }
 
   grid.innerHTML = visible.map(p => {
@@ -1449,38 +1460,45 @@ function buildProjectCards() {
 }
 
 // ─── Agent & JD Data (#3 Recruit) ──────────────────────────────────────
+// zone: 'employee' = dedicated to a staff member  |  'service' = IT shared pool
+// selfSchedule: claw can actively claim open tickets from queue without being assigned
 const AGENTS = [
-  {id:'agent-A',name:'Worker-A',zone:'external',status:'busy',      model:'claude-sonnet-4-5',cost_1k:3,  task:'task3',hb_s:2,
+  {id:'agent-A',name:'Claw-A',zone:'employee',assignedTo:'Sarah K. (Engineering)',selfSchedule:true,
+   status:'busy',      model:'claude-sonnet-4-5',cost_1k:3,  task:'task3',hb_s:2,
    caps:['html-generation','semantic-markup','self-contained-output','w3c-validation']},
-  {id:'agent-B',name:'Worker-B',zone:'external',status:'busy',      model:'claude-sonnet-4-5',cost_1k:3,  task:'task2',hb_s:5,
+  {id:'agent-B',name:'Claw-B',zone:'employee',assignedTo:'Mike T. (Engineering)',selfSchedule:false,
+   status:'busy',      model:'claude-sonnet-4-5',cost_1k:3,  task:'task2',hb_s:5,
    caps:['css-design','web-styling','responsive-layout','self-contained-output']},
-  {id:'agent-C',name:'Worker-C',zone:'external',status:'available', model:'claude-opus-4-5',  cost_1k:15, task:null,   hb_s:8,
+  {id:'agent-C',name:'Claw-C',zone:'service', assignedTo:null,selfSchedule:true,
+   status:'available', model:'claude-opus-4-5',  cost_1k:15, task:null,   hb_s:8,
    caps:['security-review','html-audit','sod-enforcement','xss-detection','content-quality-check']},
-  {id:'agent-D',name:'Worker-D',zone:'external',status:'available', model:'gpt-4o',           cost_1k:5,  task:null,   hb_s:12,
+  {id:'agent-D',name:'Claw-D',zone:'service', assignedTo:null,selfSchedule:true,
+   status:'available', model:'gpt-4o',           cost_1k:5,  task:null,   hb_s:12,
    caps:['evaluation','preview-validation','completeness-audit','content-quality-check']},
-  {id:'agent-E',name:'Worker-E',zone:'external',status:'offline',   model:'gemini-1.5-pro',   cost_1k:3.5,task:null,   hb_s:null,
+  {id:'agent-E',name:'Claw-E',zone:'service', assignedTo:null,selfSchedule:true,
+   status:'offline',   model:'gemini-1.5-pro',   cost_1k:3.5,task:null,   hb_s:null,
    caps:['html-generation','w3c-validation','css-design']},
 ];
 const JDS = [
-  {id:'jd-task4',task_id:'task4',seq:4,title:'Security & SoD Reviewer',
-   description:'Independent audit of index.html. Must be different model lineage from task3 builder.',
+  {id:'jd-task4',task_id:'task4',seq:4,title:'Security & SoD Reviewer Claw',
+   description:'Independent audit of index.html. NemoClaw must be different model lineage from task3 builder (SoD hard rule).',
    required_caps:['security-review','html-audit','sod-enforcement','xss-detection'],
    sod_exclude:'agent-A',status:'open',match_ids:['agent-C']},
-  {id:'jd-task5',task_id:'task5',seq:5,title:'Final Evaluator',
-   description:'Validate index.html opens directly as static page, all sections present, no deps.',
+  {id:'jd-task5',task_id:'task5',seq:5,title:'Final Evaluator Claw',
+   description:'Validate index.html opens directly as static page, all sections present, no external deps.',
    required_caps:['evaluation','preview-validation','completeness-audit'],
    sod_exclude:null,status:'pending_deps',match_ids:['agent-C','agent-D']},
 ];
 const HB_LOG = [
-  {t:'09:22:15',msg:'<b>Worker-A</b> — task3 51% complete, mem OK, timeout 1440s'},
-  {t:'09:22:10',msg:'<b>Worker-B</b> — task2 55% complete, mem OK, timeout 2160s'},
-  {t:'09:18:44',msg:'<b>Worker-A</b> — task3 HTML skeleton committed to workspace'},
-  {t:'09:15:33',msg:'<b>Worker-B</b> — task2 CSS skeleton committed to workspace'},
-  {t:'09:11:27',msg:'<b>NEMO</b> — Worker-A atomically checked out task3 (SoD: excludes Worker-B lineage)'},
-  {t:'09:11:25',msg:'<b>NEMO</b> — Worker-B atomically checked out task2 (deps satisfied)'},
-  {t:'09:11:20',msg:'<b>Worker-C</b> — registered, capabilities verified, heartbeat active'},
-  {t:'09:11:18',msg:'<b>Worker-D</b> — registered, evaluation model, heartbeat active'},
-  {t:'09:01:04',msg:'<b>Orchestrator</b> — posted 5 JDs to bulletin board, DAG locked'},
+  {t:'09:22:15',msg:'<b>Claw-A</b> — task3 51% complete, mem OK, timeout 1440s [employee · Sarah K.]'},
+  {t:'09:22:10',msg:'<b>Claw-B</b> — task2 55% complete, mem OK, timeout 2160s [employee · Mike T.]'},
+  {t:'09:18:44',msg:'<b>Claw-A</b> — task3 HTML skeleton committed to workspace'},
+  {t:'09:15:33',msg:'<b>Claw-B</b> — task2 CSS skeleton committed to workspace'},
+  {t:'09:11:27',msg:'<b>NEMO</b> — Claw-A self-scheduled &amp; atomically checked out task3 (SoD: excludes Claw-B lineage)'},
+  {t:'09:11:25',msg:'<b>NEMO</b> — Claw-B assigned to task2 by Orchestrator (deps satisfied)'},
+  {t:'09:11:20',msg:'<b>Claw-C</b> — service claw online, NVIDIA OpenShell verified, self-schedule enabled'},
+  {t:'09:11:18',msg:'<b>Claw-D</b> — service claw online, evaluation model, self-schedule enabled'},
+  {t:'09:01:04',msg:'<b>Orchestrator</b> — posted 5 Claw JDs to dispatch board, DAG locked'},
 ];
 function buildRecruitBoard() {
   const jdEl = document.getElementById('jd-list'); if(!jdEl) return;
@@ -1489,13 +1507,13 @@ function buildRecruitBoard() {
     const sLabel = jd.status==='open'?'OPEN':'PENDING DEPS';
     const matches = AGENTS.filter(a => jd.match_ids.includes(a.id) && a.id !== jd.sod_exclude && a.status==='available');
     const matchHtml = matches.length > 0
-      ? '<div class="jd-match">\u2713 '+matches.length+' qualified: '+matches.map(a=>a.name).join(', ')+'</div>'
-      : '<div class="jd-no-match">No available match yet</div>';
+      ? '<div class="jd-match">\u2713 '+matches.length+' qualified claw'+( matches.length>1?'s':'')+': '+matches.map(a=>a.name).join(', ')+'</div>'
+      : '<div class="jd-no-match">No available NemoClaw match yet</div>';
     return '<div class="jd-card">'
       +'<div class="jd-card-top"><span class="jd-card-title">'+jd.title+'</span><span style="font-size:10px;font-weight:700;color:'+sColor+'">'+sLabel+'</span></div>'
       +'<span class="jd-task-ref">\u2192 task'+jd.seq+' \u00b7 '+jd.description+'</span>'
       +'<div class="jd-caps">'+jd.required_caps.map(c=>'<span class="jd-cap">'+c+'</span>').join('')+'</div>'
-      +(jd.sod_exclude?'<div class="jd-sod">\u26a1 SoD: excludes '+jd.sod_exclude+' lineage</div>':'')
+      +(jd.sod_exclude?'<div class="jd-sod">\u26a1 SoD: excludes '+(AGENTS.find(a=>a.id===jd.sod_exclude)||{name:jd.sod_exclude}).name+' lineage</div>':'')
       +matchHtml+'</div>';
   }).join('');
   const agEl = document.getElementById('agent-list'); if(!agEl) return;
@@ -1503,13 +1521,26 @@ function buildRecruitBoard() {
     const sColor = a.status==='busy'?'var(--green)':a.status==='available'?'var(--blue)':'var(--text3)';
     const hbText = a.hb_s!=null?'HB '+a.hb_s+'s ago':'offline';
     const hbCls = a.status==='offline'?'hb-offline':'hb-active pulse';
-    const taskText = a.task?'Assigned: <strong>'+a.task+'</strong>':a.status==='available'?'Available — awaiting JD match':'Offline — no heartbeat';
-    const borderCls = 'agent-border-external';
+    const taskText = a.task?'On ticket: <strong>'+a.task+'</strong>':a.status==='available'?'Ready — awaiting ticket match':'Offline — no heartbeat';
+    // zone badge
+    const isEmployee = a.zone === 'employee';
+    const zoneBadgeColor = isEmployee ? 'rgba(88,166,255,.15)' : 'rgba(57,211,83,.12)';
+    const zoneBorderColor = isEmployee ? 'rgba(88,166,255,.4)' : 'rgba(57,211,83,.3)';
+    const zoneTextColor = isEmployee ? 'var(--blue)' : 'var(--cyan)';
+    const zoneLabel = isEmployee ? '👤 Employee Claw' : '⚙ Service Claw';
+    const borderCls = isEmployee ? 'agent-border-internal' : 'agent-border-external';
+    const assignedHtml = isEmployee
+      ? '<div style="font-size:10px;color:var(--text2);margin-top:3px;">Assigned to: <b style="color:var(--blue)">'+a.assignedTo+'</b></div>'
+      : '<div style="font-size:10px;color:var(--text2);margin-top:3px;">IT shared pool — available to all projects</div>';
+    const selfSchedHtml = a.selfSchedule
+      ? '<span style="font-size:10px;padding:1px 5px;border-radius:3px;background:rgba(210,153,34,.12);color:var(--orange);border:1px solid rgba(210,153,34,.25);">self-schedule</span>'
+      : '<span style="font-size:10px;color:var(--text3);">assigned-only</span>';
     return '<div class="agent-card '+borderCls+'">'
-      +'<div class="agent-card-top"><div class="agent-name"><span class="dot" style="background:'+sColor+';width:7px;height:7px;"></span>'+a.name+' <span class="agent-type">'+a.zone+'</span></div>'
+      +'<div class="agent-card-top"><div class="agent-name"><span class="dot" style="background:'+sColor+';width:7px;height:7px;"></span>'+a.name+' <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:'+zoneBadgeColor+';color:'+zoneTextColor+';border:1px solid '+zoneBorderColor+';">'+zoneLabel+'</span></div>'
       +'<div class="hb-indicator"><span class="hb-dot '+hbCls+'"></span>'+hbText+'</div></div>'
-      +'<div class="agent-model">'+a.model+' \u00b7 $'+a.cost_1k+'/1k tkn</div>'
-      +'<div class="agent-task">'+taskText+'</div>'
+      +assignedHtml
+      +'<div style="display:flex;align-items:center;gap:6px;margin-top:5px;"><div class="agent-model">'+a.model+' · $'+a.cost_1k+'/1k tkn</div><div>'+selfSchedHtml+'</div></div>'
+      +'<div class="agent-task" style="margin-top:5px;">'+taskText+'</div>'
       +'<div class="agent-caps">'+a.caps.map(c=>'<span class="jd-cap">'+c+'</span>').join('')+'</div>'
       +'</div>';
   }).join('');
@@ -1526,12 +1557,12 @@ const EVAL_TASKS = [
   {seq:5,title:'Validate preview & completeness', verdict:'pending', quality:null,cost:0,   budget:900, time_s:null,retries:0},
 ];
 const SEC_EVENTS = [
-  {t:'09:22:15',level:'pass',msg:'<b>task3</b> HTML skeleton scanned — no unsafe inline event handlers found'},
-  {t:'09:22:10',level:'pass',msg:'<b>task2</b> CSS scanned — no external resource URLs detected'},
-  {t:'09:18:44',level:'info',msg:'<b>Worker-A</b> output committed — SoD audit queued for task4'},
-  {t:'09:11:27',level:'info',msg:'<b>NEMO</b> — agent qualification verified, no impersonation detected'},
+  {t:'09:22:15',level:'pass',msg:'<b>task3</b> HTML skeleton scanned by NVIDIA OpenShell — no unsafe inline event handlers found'},
+  {t:'09:22:10',level:'pass',msg:'<b>task2</b> CSS scanned by NVIDIA OpenShell — no external resource URLs detected'},
+  {t:'09:18:44',level:'info',msg:'<b>Claw-A</b> output committed — SoD audit queued for task4 (Claw-C assigned)'},
+  {t:'09:11:27',level:'info',msg:'<b>NEMO</b> — NemoClaw qualification verified, no impersonation detected, OpenShell policy enforced'},
   {t:'09:11:18',level:'pass',msg:'<b>task1</b> evaluation passed quality threshold (0.94 \u2265 0.80)'},
-  {t:'09:01:04',level:'warn',msg:'<b>Planner</b> — prompt boundary enforced; project request sanitized before DAG decomposition'},
+  {t:'09:01:04',level:'warn',msg:'<b>Planner</b> — prompt boundary enforced; customer request sanitized before DAG decomposition'},
 ];
 function buildEvalDashboard() {
   const maxBudget = Math.max(...EVAL_TASKS.map(t=>t.budget));
